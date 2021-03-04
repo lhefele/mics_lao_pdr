@@ -14,8 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 And now I am writing other stuff....
 
-Today is thursday
+Today is Thursday
 
+Tomorrow is Friday
 
 
 ```{r}
