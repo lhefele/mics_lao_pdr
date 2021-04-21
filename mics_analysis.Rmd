@@ -1,0 +1,1288 @@
+---
+title: "LAO-H-076 MICS study"
+author: "lisa"
+date: "20 8 2019"
+output: 
+  html_document:
+   toc: true
+   toc_depth: 3
+   number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Lao PDR: MICS Data - mics6
+
+
+
+
+
+
+```{r options}
+
+options(scipen = 999) # suppress scientific notion
+
+```
+
+
+
+```{r packages}
+
+library(tidyverse)
+
+library(foreign) 
+
+# library(expss) # export
+
+#library(haven) # initially I used haven; foreign turned out to be better?!
+
+library(sjPlot)
+
+#library(sjlabelled)
+
+#library(labelled)
+
+#library(surveytoolbox) # install with #devtools::install_github("martinctc/surveytoolbox")
+
+library(lubridate) # working with dates
+
+library(survey)
+
+#library(sjmisc)
+
+#library(knitr)
+
+library(janitor)
+
+#library(survminer)
+
+library(DataExplorer)
+
+library(naniar)
+
+library(srvyr)
+
+```
+
+
+
+
+## Data
+
+
+```{r dataset mics6}
+
+# package foreign
+mics6.ch <- read.spss("./data/mics6/ch.sav", use.value.label=TRUE, to.data.frame=TRUE) 
+
+mics6.hh <- read.spss("./data/mics6/hh.sav", use.value.label=TRUE, to.data.frame=TRUE) 
+
+mics6.hl <- read.spss("./data/mics6/hl.sav", use.value.label=TRUE, to.data.frame=TRUE) 
+
+mics6.wn <- read.spss("./data/mics6/wm.sav", use.value.label=TRUE, to.data.frame=TRUE)
+
+```
+
+
+
+
+## Data: mics6.ch - children under five
+
+
+```{r mics6.ch glimpse}
+
+# Mothers or primary caretakers of children under five – ch.sav
+dim(mics6.ch)
+# [1] 11812   443
+glimpse(mics6.ch) 
+
+# look at lables 
+sjPlot::view_df(mics6.ch)
+mics6.ch %>% labelled::look_for("UF4")
+
+# Mother / caretaker
+mics6.ch %>% count(UF4) # range from 1-20
+# need to make a individual number for the merging
+
+```
+
+
+### new variables in mics6.ch
+
+```{r household and child id}
+
+# Household ID
+mics6.ch %>% unite(HH_id, c(HH1, HH2), sep = "_", remove = FALSE, na.rm = FALSE) -> mics6.ch
+
+
+# Are there any duplicates?
+mics6.ch %>% group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n()) # many??
+# Need to clarify what this means
+# Same household ID would suggest children are from same household
+# Is there anything in the questionnaire that would indicate that can be more than 1 child under 5 per household
+# Does this have any implications for the analysis?
+
+# Yes, it looks as if there is a question at the end, UF16, asking if there is any other child living in that household under 5
+mics6.ch %>% filter(UB2 <3) %>% 
+  group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n()) # 839 obs
+839/6887 # 12.2%
+
+
+# Need a unique id for each child
+# UF3 should be the individual number of each child (LN of child)
+# UF1 = HH1
+# UF2 = HH2
+mics6.ch %>% unite(ch_id, c(UF1, UF2, UF3), sep = "_", remove = FALSE, na.rm = FALSE) -> mics6.ch
+
+mics6.ch %>% group_by(ch_id) %>% filter(n()>1) %>% summarize(n=n()) # none...
+# identify each child
+
+
+```
+
+
+```{r strata}
+
+# strata
+# Do I need a new variable combining HH6 and HH7?
+mics6.ch %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics6.ch
+mics6.ch %>% count(strata)
+
+# This is a good example for the combination of two columns: As you can see, the entries of both columns are connected with "_". Later, you will see another example of merging two columns in which the entries do not overlap
+
+```
+
+
+
+```{r date of interview}
+
+# Day of the interview
+
+mics6.ch$UF7D_2 <- as.numeric(as.character(mics6.ch$UF7D))
+mics6.ch$UF7Y_2 <- as.numeric(as.character(mics6.ch$UF7Y))
+mics6.ch$UF7M_2 <- as.numeric(as.character(mics6.ch$UF7M))
+
+# day of interview
+mics6.ch %>%  mutate(I_date = make_date(UF7Y_2, UF7M_2, UF7D_2)) -> mics6.ch
+# A function from lubridate package
+
+```
+
+
+
+```{r date of birth}
+
+# Date of birth 
+mics6.ch %>% count(UB1D)
+
+mics6.ch$UB1D_2 <- as.numeric(as.character(mics6.ch$UB1D))
+
+mics6.ch %>% mutate(UB1M_2 = recode(UB1M,
+                                     "JANUARY" = "1",
+                                     "FEBRUARY" = "2",
+                                     "MARCH" = "3",
+                                     "APRIL" = "4",
+                                     "MAY" = "5", 
+                                     "JUNE" = "6",
+                                     "JULY" = "7",
+                                     "AUGUST" = "8",
+                                     "SEPTEMBER" = "9",
+                                     "OCTOBER" = "10",
+                                     "NOVEMBER" = "11",
+                                     "DECEMBER" = "12")) -> mics6.ch
+
+mics6.ch %>% count(UB1M, UB1M_2)
+
+mics6.ch$UB1M_2 <- as.numeric(as.character(mics6.ch$UB1M_2))
+
+mics6.ch$UB1Y_2 <- as.numeric(as.character(mics6.ch$UB1Y))
+
+mics6.ch %>%  mutate(dob_ch = make_date(UB1Y_2, UB1M_2, UB1D_2)) -> mics6.ch
+
+```
+
+
+
+```{r calculate months}
+
+# calculate months 
+
+mics6.ch$age_w <- as.numeric(difftime(mics6.ch$I_date, mics6.ch$dob_ch, units = "weeks"))
+summary(mics6.ch$age_w)
+
+# 125 NAs -> who are these?
+
+mics6.ch %>% mutate(age_y = age_w / 52) -> mics6.ch
+
+mics6.ch %>% count(UB2, CAGE, age_y) #-> tab
+
+mics6.ch %>% count(UB2, CAGE)
+
+
+```
+
+
+
+
+```{r recall or not}
+
+# IM11
+mics6.ch %>% filter(UB2 < 3) %>% count(IM11)
+# If vaccination card or any other documents are not available to be checked, IM11 was asked
+
+
+mics6.ch %>% filter(UB2 < 3) %>% count(IM11, IM12A, IM12B, IM12C)
+
+# If response to IM11 and IM12 was always No or DK; child did not receive any vaccination!
+
+
+# Variable: NO or DK
+
+mics6.ch %>% 
+  mutate(IM11_IM12 = ifelse((IM11 == "NO" | IM11 == "DK") & 
+                            (IM12A == "NO" | IM12A == "DK") &
+                            (IM12B == "NO" | IM12B == "DK") &
+                             (IM12C == "NO" | IM12C == "DK"), 1, 0)) -> mics6.ch
+mics6.ch %>% count(IM11_IM12,IM11, IM12A, IM12B, IM12C)
+
+mics6.ch %>% count(IM11, IM11_IM12)
+
+mics6.ch %>% 
+  mutate(IM11_2 = ifelse((IM11_IM12 == "1" & IM11 == "NO"), "NO",
+                  ifelse((IM11_IM12 == "1" & IM11 == "DK"), "DK", NA))) -> mics6.ch
+
+mics6.ch %>% count(IM11,IM11_2)
+# looks ok
+
+
+
+
+# Table: is there vaccination card, vaccination document seen, recall
+mics6.ch %>% filter(UB2 < 3) %>% count(IM2, IM5, IM11) # all NAs in kids under 3 are recall; not NA
+
+
+# New variable
+# recall - 0: no; vaccination documents were there
+# recall - 1: yes; no vaccination documents 
+# Recode all entries into "1"
+mics6.ch %>% mutate(recall = recode(IM11,
+                                     "YES" = 1,
+                                     "NO" = 1,
+                                     "DK" = 1)) -> mics6.ch
+mics6.ch %>% count(recall) # ok
+
+# Replace all NA in children under 5 with "0"
+mics6.ch %>%  mutate(recall = replace(recall, is.na(recall) & UB2 < 3, 0))  -> mics6.ch
+
+
+
+
+mics6.ch %>%count(IM11, recall)
+mics6.ch %>% filter(UB2 < 3) %>% count(IM11, recall) # seems like it did work
+
+# BUT: Sometimes for the IM6 responses, there was the option for mother´s report.... This is essentially recall!
+
+# I would check that for each vaccination individually
+
+```
+
+
+
+```{r source of information}
+
+# Sometimes, it is nice to re-check where information is coming from. IM2 only asks if participants have any of the vaccination documents
+# IM5 actually says which of them was AVAILABLE
+# IM5 is only asked if participants respond that they have any of the documents
+# All NA in IM5 responded they do not possess any vaccination document
+
+mics6.ch %>% filter(UB2 < 3) %>% count(IM2, IM5)
+# First, need to convert NAs in IM5
+
+mics6.ch %>% mutate(IM5_2 = recode(IM5,
+                 "YES, ONLY CARD / MCH HANDBOOK SEEN" = 1,
+                 "YES, ONLY OTHER DOCUMENT SEEN" = 2,
+                 "YES, CARD / MCH HANDBOOK AND OTHER DOCUMENT SEEN" = 3,
+                 "NO CARDS / MCH HANDBOOK AND NO OTHER DOCUMENT SEEN" = 4)) -> mics6.ch
+
+mics6.ch %>% mutate(IM5_2 = replace(IM5_2, is.na(IM5_2) & UB2 < 3, 5)) -> mics6.ch
+mics6.ch %>% count(IM5_2, recall)
+
+
+# Variable 2
+# Info from any document 
+mics6.ch %>% mutate(IM5_3 = recode(IM5_2, "5" = 4)) -> mics6.ch
+mics6.ch %>% count(IM5_2, IM5_3) # ok
+
+# recall variable IM11 in combination with IM5_2
+mics6.ch %>% filter(UB2 < 3) %>% count(IM5_2, IM11)
+
+```
+
+
+
+```{r hepatitis B birth dose}
+
+# Need to create variables; for having a date of vaccination
+# marked on card
+
+# First create the date of vaccination
+
+
+# Date              
+# NOT GIVEN         
+# MARKED ON CARD    
+# MOTHER REPORTED   
+# Inconsistent      
+# NO RESPONSE       
+
+
+# hepatitis B birth dose
+
+
+# Day
+
+# First variable: convert to numeric values
+mics6.ch %>% count(IM6H0D) # there is a mix of strings and numbers in this variable
+mics6.ch$IM6H0D_2 <- as.numeric(as.character(mics6.ch$IM6H0D))
+mics6.ch %>% count(IM6H0D, IM6H0D_2) # ok we can create the date variable with the numeric vector...
+
+# Second variable: categories
+mics6.ch %>% mutate(IM6H0D_3 = ifelse(IM6H0D == "MARKED ON CARD", "2",
+                               ifelse(IM6H0D == "MOTHER REPORTED","3", 
+                               ifelse(IM6H0D == "NOT GIVEN", "4", "1")))) -> mics6.ch
+# Note: when using the command ifelse; do not confuse it with if_else
+
+# Code
+# if date is there = 1
+# marked on card = 2
+# mother reported = 3  # technically recall 
+# not given = 4
+
+
+mics6.ch %>% count(IM6H0D, IM6H0D_3)
+mics6.ch %>% count(IM6H0D_3) # Okkkk seems weird, but I think it worked
+
+
+# third variable: categories
+# I am changing the wording here
+mics6.ch %>% mutate(IM6H0D_4 = ifelse(IM6H0D == "MARKED ON CARD", "YES, BUT NO DATE ON CARD",
+                               ifelse(IM6H0D == "MOTHER REPORTED","YES, MOTHER REPORTED", 
+                               ifelse(IM6H0D == "NOT GIVEN", "NOT GIVEN, ACC TO DOC", 
+                                      "YES, DATE ON CARD")))) -> mics6.ch
+mics6.ch %>% count(IM6H0D_4)
+
+
+
+
+# Month
+
+# convert to numeric data
+mics6.ch %>% count(IM6H0M)
+mics6.ch %>% mutate(IM6H0M_2 = recode(IM6H0M,
+                                     "JANUARY" = "1",
+                                     "FEBRUARY" = "2",
+                                     "MARCH" = "3",
+                                     "APRIL" = "4",
+                                     "MAY" = "5", 
+                                     "JUNE" = "6",
+                                     "JULY" = "7",
+                                     "AUGUST" = "8",
+                                     "SEPTEMBER" = "9",
+                                     "OCTOBER" = "10",
+                                     "NOVEMBER" = "11",
+                                     "DECEMBER" = "12")) -> mics6.ch
+mics6.ch %>% count(IM6H0M, IM6H0M_2) # the variable is still a factor
+mics6.ch$IM6H0M_2 <- as.numeric(as.character(mics6.ch$IM6H0M_2))
+
+
+
+# Year 
+
+# Convert to numeric
+mics6.ch$IM6H0Y_2 <- as.numeric(as.character(mics6.ch$IM6H0Y))
+
+
+
+
+
+
+# Now create the date
+mics6.ch %>% mutate(IM6H0_date = make_date(IM6H0Y_2, IM6H0M_2, IM6H0D_2)) -> mics6.ch
+mics6.ch %>% count(IM6H0_date) # looks ok
+
+
+
+
+# Time since vaccination
+
+# I am using a command from R base here. There is probably a way to calculate it with a tidyverse command
+
+mics6.ch$IM6H0_time <- as.numeric(difftime(mics6.ch$IM6H0_date, mics6.ch$dob_ch, units = "days"))
+summary(mics6.ch$IM6H0_time)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+#   0.00    0.00    0.00   15.69    1.00  731.00    9013
+
+# Comments on time since vaccination:
+# no negative values! negative values would indicate mistakes in dob or date of vaccination
+# Max = 731 days; could be a mistake in writing down the year?
+
+
+# histogram
+mics6.ch %>% filter(UB2 <3) %>% ggplot(aes(x=IM6H0_time)) + geom_histogram(binwidth = 1)
+
+# need status variable for survival plot
+# new variable for vaccinated within 24 hours or not
+
+# We would need a variable for being vaccinated within 24 h or not
+
+mics6.ch %>% 
+  mutate(IM6H0D_5 = ifelse(IM6H0_time == 0, "WITHIN 24 HOURS", "NOT WITHIN 24 HOURS")) -> mics6.ch
+
+mics6.ch %>% count(IM6H0D_5) 
+
+
+mics6.ch %>% count(IM6H0D_4, IM6H0D_5) # There are 4 people for which the the categorization did not work - why??
+
+mics6.ch %>% 
+  unite(IM6H0D_6, c(IM6H0D_4, IM6H0D_5), sep = "_", remove = FALSE, na.rm = FALSE) -> mics6.ch
+
+mics6.ch %>% count(IM6H0D_6)
+
+mics6.ch %>% 
+  mutate(
+    IM6H0D_7 = ifelse(IM6H0D_6 == "NOT GIVEN, ACC TO DOC_NA", "NOT GIVEN, ACC TO DOC",
+                    ifelse(IM6H0D_6 == "YES, BUT NO DATE ON CARD_NA", 
+                           "YES, BUT NO DATE ON CARD", 
+                    ifelse(IM6H0D_6 == "YES, DATE ON CARD_NA", "YES, DATE ON CARD - NA",
+                    ifelse(IM6H0D_6 == "YES, DATE ON CARD_NOT WITHIN 24 HOURS",
+                           "YES, DATE ON CARD - NOT WITHIN 24 HOURS",
+                    ifelse(IM6H0D_6 == "YES, DATE ON CARD_WITHIN 24 HOURS", 
+                           "YES, DATE ON CARD - WITHIN 24 HOURS",
+                    ifelse(IM6H0D_6 == "YES, MOTHER REPORTED_NA", "RECALL: YES, MOTHER REPORTED", IM6H0D_6))))))) -> mics6.ch 
+
+mics6.ch %>% count(IM6H0D_7) # looks ok; need to check the numbers
+# Changed "mother reported" to recall - because this is what it essentially is
+# NA_NA needs to be replaced with NA
+mics6.ch %>% replace_with_na(replace = list(IM6H0D_7 = "NA_NA")) -> mics6.ch
+
+
+# Now combine recall and info from card
+
+
+# First recode IM15; so there is no confusion
+
+mics6.ch %>% count(IM15)
+mics6.ch %>% 
+  mutate(IM15_2 = recode(IM15,
+                           "YES, WITHIN 24 HOURS" = "RECALL: YES, WITHIN 24 HOURS",
+                           "YES, BUT NOT WITHIN 24 HOURS" = "RECALL: YES, BUT NOT WITHIN 24 HOURS",
+                           "NO" = "RECALL: NO",
+                           "DK" = "RECALL: DK",
+                           "NO RESPONSE" = "RECALL: NO RESPONSE")) -> mics6.ch
+mics6.ch %>% count(IM15, IM15_2)
+
+mics6.ch %>% mutate(hbv_bd_1 = coalesce(IM15_2, IM6H0D_7)) -> mics6.ch 
+
+mics6.ch %>% count(hbv_bd_1)
+# It is not yet correct
+# In IM11 & IM12; if all repsonses were "NO"; there was no probing for the recall of vaccinations
+# Therefore; soome of the NAs in the new variable need to be changed to "No" or "DK"
+
+mics6.ch %>% count(hbv_bd_1, IM11, IM11_2, IM11_IM12)
+
+mics6.ch %>% 
+  mutate(hbv_bd_2 = replace(hbv_bd_1, is.na(hbv_bd_1) & 
+                              UB2 < 3 & IM11 == "NO", "RECALL: NO"))  %>%
+  mutate(hbv_bd_2 = replace(hbv_bd_2, is.na(hbv_bd_2) & 
+                              UB2 < 3 & IM11 == "DK", "RECALL: DK")) -> mics6.ch
+
+
+
+
+mics6.ch %>% count(hbv_bd_2)
+
+mics6.ch %>% filter(UB2 <3) %>% count(hbv_bd_2)
+# Now, all responses should be categorized correctly !!!
+
+
+# hepatitis B birth dose (yes, no)
+# DK will be grouped with no
+# NO RESPONSE will be grouped with no
+mics6.ch %>% 
+  mutate(hbv_bd_3 = recode(hbv_bd_2,
+                           "NOT GIVEN, ACC TO DOC" = "0",
+                           "RECALL: DK" = "0",
+                           "RECALL: DK/NO" = "0", 
+                           "RECALL: NO" = "0",
+                           "RECALL: NO RESPONSE" = "0",
+                           "RECALL: YES, BUT NOT WITHIN 24 HOURS" = "1",
+                           "RECALL: YES, MOTHER REPORTED" = "1",
+                           "RECALL: YES, WITHIN 24 HOURS" = "1",
+                           "YES, BUT NO DATE ON CARD" = "1",
+                           "YES, DATE ON CARD - NA" = "1",
+                           "YES, DATE ON CARD - NOT WITHIN 24 HOURS" = "1",
+                           "YES, DATE ON CARD - WITHIN 24 HOURS" = "1")) -> mics6.ch
+
+mics6.ch %>% count(hbv_bd_3)
+
+
+mics6.ch %>% 
+  mutate(hbv_bd_4 = recode(hbv_bd_2,
+                           "NOT GIVEN, ACC TO DOC" = "0",
+                           "RECALL: DK" = "0",
+                           "RECALL: DK/NO" = "0", 
+                           "RECALL: NO" = "0",
+                           "RECALL: NO RESPONSE" = "0",
+                           "RECALL: YES, BUT NOT WITHIN 24 HOURS" = "1",
+                           "RECALL: YES, MOTHER REPORTED" = "1",
+                           "RECALL: YES, WITHIN 24 HOURS" = "2",
+                           "YES, BUT NO DATE ON CARD" = "1",
+                           "YES, DATE ON CARD - NA" = "1",
+                           "YES, DATE ON CARD - NOT WITHIN 24 HOURS" = "1",
+                           "YES, DATE ON CARD - WITHIN 24 HOURS" = "2")) -> mics6.ch
+
+mics6.ch %>% count(hbv_bd_4)
+# 0	2159		no	
+# 1	1788		yes, not in 24 h	
+# 2	2940	  yes, in 24 h
+
+
+mics6.ch %>% mutate(hbv_bd_5 = ifelse(hbv_bd_4 == 0, 0, 1)) -> mics6.ch
+
+```
+
+
+
+
+```{r pentavalent 1}
+
+# Penta 1
+
+mics6.ch %>% count(IM6PENTA1D)
+mics6.ch$IM6PENTA1D_2 <- as.numeric(as.character(mics6.ch$IM6PENTA1D))
+mics6.ch %>% count(IM6PENTA1D, IM6PENTA1D_2) # ok we can create the date variable with the numeric vector...
+
+
+mics6.ch %>% mutate(IM6PENTA1D_3 = ifelse(IM6PENTA1D == "MARKED ON CARD", "2",
+                                   ifelse(IM6PENTA1D == "MOTHER REPORTED","3", 
+                                   ifelse(IM6PENTA1D == "NOT GIVEN", "4", "1")))) -> mics6.ch
+mics6.ch %>% count(IM6PENTA1D, IM6PENTA1D_3)
+mics6.ch %>% count(IM6PENTA1D_3) 
+
+
+
+
+mics6.ch %>% count(IM6PENTA1M)
+mics6.ch %>% mutate(IM6PENTA1M_2 = recode(IM6PENTA1M,
+                                     "JANUARY" = "1",
+                                     "FEBRUARY" = "2",
+                                     "MARCH" = "3",
+                                     "APRIL" = "4",
+                                     "MAY" = "5", 
+                                     "JUNE" = "6",
+                                     "JULY" = "7",
+                                     "AUGUST" = "8",
+                                     "SEPTEMBER" = "9",
+                                     "OCTOBER" = "10",
+                                     "NOVEMBER" = "11",
+                                     "DECEMBER" = "12")) -> mics6.ch
+mics6.ch %>% count(IM6PENTA1M, IM6PENTA1M_2)
+mics6.ch$IM6PENTA1M_2 <- as.numeric(as.character(mics6.ch$IM6PENTA1M_2))
+
+mics6.ch$IM6PENTA1Y_2 <- as.numeric(as.character(mics6.ch$IM6PENTA1Y))
+
+
+
+
+# Now create the date
+
+mics6.ch %>% mutate(IM6PENTA1_date = make_date(IM6PENTA1Y_2, IM6PENTA1M_2, IM6PENTA1D_2)) -> mics6.ch
+mics6.ch %>% count(IM6PENTA1_date) # looks ok
+
+
+```
+
+
+
+```{r pentavalent 2}
+
+# Penta 2
+
+mics6.ch %>% count(IM6PENTA2D)
+mics6.ch$IM6PENTA2D_2 <- as.numeric(as.character(mics6.ch$IM6PENTA2D))
+mics6.ch %>% count(IM6PENTA1D, IM6PENTA1D_2) # ok we can create the date variable with the numeric vector...
+
+
+mics6.ch %>% mutate(IM6PENTA2D_3 = ifelse(IM6PENTA2D == "MARKED ON CARD", "2",
+                                   ifelse(IM6PENTA2D == "MOTHER REPORTED","3", 
+                                   ifelse(IM6PENTA2D == "NOT GIVEN", "4", "1")))) -> mics6.ch
+
+mics6.ch %>% count(IM6PENTA2D, IM6PENTA2D_3)
+mics6.ch %>% count(IM6PENTA2D_3) 
+
+
+
+mics6.ch %>% count(IM6PENTA2M)
+mics6.ch %>% mutate(IM6PENTA2M_2 = recode(IM6PENTA2M,
+                                     "JANUARY" = "1",
+                                     "FEBRUARY" = "2",
+                                     "MARCH" = "3",
+                                     "APRIL" = "4",
+                                     "MAY" = "5", 
+                                     "JUNE" = "6",
+                                     "JULY" = "7",
+                                     "AUGUST" = "8",
+                                     "SEPTEMBER" = "9",
+                                     "OCTOBER" = "10",
+                                     "NOVEMBER" = "11",
+                                     "DECEMBER" = "12")) -> mics6.ch
+mics6.ch %>% count(IM6PENTA2M, IM6PENTA2M_2)
+mics6.ch$IM6PENTA2M_2 <- as.numeric(as.character(mics6.ch$IM6PENTA2M_2))
+
+mics6.ch$IM6PENTA2Y_2 <- as.numeric(as.character(mics6.ch$IM6PENTA2Y))
+
+
+
+# Now create the date
+
+mics6.ch %>% mutate(IM6PENTA2_date = make_date(IM6PENTA2Y_2, IM6PENTA2M_2, IM6PENTA2D_2)) -> mics6.ch
+mics6.ch %>% count(IM6PENTA2_date) # looks ok
+
+
+```
+
+
+
+
+```{r pentavalent 3}
+
+# Penta 3
+
+mics6.ch %>% count(IM6PENTA3D)
+mics6.ch$IM6PENTA3D_2 <- as.numeric(as.character(mics6.ch$IM6PENTA3D))
+mics6.ch %>% count(IM6PENTA1D, IM6PENTA1D_2) # ok we can create the date variable with the numeric vector...
+
+
+mics6.ch %>% mutate(IM6PENTA3D_3 = ifelse(IM6PENTA3D == "MARKED ON CARD", "2",
+                                   ifelse(IM6PENTA3D == "MOTHER REPORTED","3", 
+                                   ifelse(IM6PENTA3D == "NOT GIVEN", "4", "1")))) -> mics6.ch
+mics6.ch %>% count(IM6PENTA3D, IM6PENTA3D_3)
+mics6.ch %>% count(IM6PENTA3D_3) 
+
+
+mics6.ch %>% count(IM6PENTA3M)
+mics6.ch %>% mutate(IM6PENTA3M_2 = recode(IM6PENTA3M,
+                                     "JANUARY" = "1",
+                                     "FEBRUARY" = "2",
+                                     "MARCH" = "3",
+                                     "APRIL" = "4",
+                                     "MAY" = "5", 
+                                     "JUNE" = "6",
+                                     "JULY" = "7",
+                                     "AUGUST" = "8",
+                                     "SEPTEMBER" = "9",
+                                     "OCTOBER" = "10",
+                                     "NOVEMBER" = "11",
+                                     "DECEMBER" = "12")) -> mics6.ch
+mics6.ch %>% count(IM6PENTA3M, IM6PENTA3M_2)
+mics6.ch$IM6PENTA3M_2 <- as.numeric(as.character(mics6.ch$IM6PENTA3M_2))
+
+mics6.ch$IM6PENTA3Y_2 <- as.numeric(as.character(mics6.ch$IM6PENTA3Y))
+
+
+
+# Now create the date
+mics6.ch %>% mutate(IM6PENTA3_date = make_date(IM6PENTA3Y_2, IM6PENTA3M_2, IM6PENTA3D_2)) -> mics6.ch
+mics6.ch %>% count(IM6PENTA3_date) # looks ok
+
+
+```
+
+
+
+
+
+
+
+### Data exploration 
+
+
+```{r data explorer}
+
+# Data explorer
+
+# introduce(mics6.ch)
+
+# plot_bar(mics6.ch)
+
+```
+
+
+```{r descriptive}
+
+# UF10 - Consent
+mics6.ch %>% count(UF10) # 92 permission not given: looks like these correspond to those 92 children we do not have the age for?
+# We can only include those with consent given
+
+# UF17 - completed questionnaire
+mics6.ch %>% count(UF17) # COMPLETED 11720
+
+# UB1D,M,Y = DOB child
+# other age variables:
+mics6.ch %>% count(UB2) # Age in years
+mics6.ch %>% count(CAGE) # Age in months
+mics6.ch %>% count(CAGED) # Age in days
+mics6.ch %>% count(CAGE_6) # Age groups
+mics6.ch %>% count(CAGE_11) # other age grouping
+
+
+
+
+
+# According to questionnaire, only children age 0, 1 or 2 were asked the questions regarding immunization
+
+mics6.ch %>% count(UB2, IM2) # Yes; only chlidren age 0-2 were asked
+
+# But I think, in the report, only children age 0-23 months were inlcuded in the section regarding vaccination
+
+
+# Characteristics of the children
+
+# anthropology - are all these measurements needed?
+
+mics6.ch %>% count(AN8) # weight in kg; not numeric
+
+mics6.ch %>% ggplot(aes(x=HAP))+geom_histogram()
+mics6.ch %>% ggplot(aes(x=HAZ))+geom_histogram()
+mics6.ch %>% ggplot(aes(x=HAM))+geom_histogram()
+mics6.ch %>% ggplot(aes(x=WAP))+geom_histogram()
+mics6.ch %>% ggplot(aes(x=WAZ))+geom_histogram()
+mics6.ch %>% ggplot(aes(x=WHP))+geom_histogram()
+mics6.ch %>% ggplot(aes(x=WHZ))+geom_histogram()
+# there are more
+
+
+# Mother's education
+mics6.ch %>% count(melevel)
+
+# Child disability
+mics6.ch %>% count(cdisability)
+
+# area
+mics6.ch %>% count(hh6a)
+
+# area
+mics6.ch %>% count(hh6b)
+
+# area
+mics6.ch %>% count(hh7r)
+
+# ethnicity
+mics6.ch %>% count(ethnicity)
+
+
+# sample weights
+mics6.ch %>% count(chweight)
+
+mics6.ch %>% ggplot(aes(x=chweight))+geom_histogram()
+
+
+```
+
+
+```{r survey design}
+
+# Data from other datasets need to be added to the children dataset
+# Then we need to look at the survey design
+
+
+# https://campus.datacamp.com/courses/analyzing-survey-data-in-r/exploring-categorical-data-2?ex=1
+# datacamp course about sampling weights / survey data
+
+
+# Understanding the sample design
+mics6.ch %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
+mics6.ch %>% count(HH6)
+
+mics6.ch %>% tabyl(HH7, HH6)
+
+mics6.ch %>% count(strata) # 50 rows
+# I am unsure what the exact number of the strata is. From what I understand, the provinces AND area (urban, rural, rural wo road) are the strata; 18x3 = 54. Or is it only the 18 provinces?
+# The cluster number at least is clear: 1160
+
+# I think it is both province and area!
+
+
+# How many clusters:
+
+# Provinces are strata
+mics6.ch %>% summarize(n_clusters = n_distinct(HH7, HH1))
+# 1160
+
+mics6.ch %>% summarize(n_clusters = n_distinct(strata, HH1))
+# 1160 # same
+
+
+
+
+mics_design <- svydesign(data = mics6.ch, 
+                         weights = ~chweight, 
+                         id = ~strata+HH1)
+mics_design # in this, there are more strata
+
+# Nest = True or not? # No, FALSE
+# Replacement ? I think not - Look at FAQ on mics.unicef; but does it make a difference?
+
+
+```
+
+
+
+```{r descriptive}
+
+# Ethnicity
+
+
+# not weighted
+mics6.ch %>%                                   
+  group_by(ethnicity) %>% 
+  summarize(Freq = n()) %>% 
+  mutate(Prop = Freq / sum(Freq)) %>% 
+     arrange(desc(Prop)) %>% 
+  ggplot(mapping = aes(x=ethnicity, y=Prop)) +
+  geom_col() +
+  coord_flip()
+
+
+# taking survey desing into account 
+
+svytable(~ethnicity, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = Freq / sum(Freq)) %>% 
+  arrange(desc(Prop)) %>% 
+  ggplot(mapping = aes(x=ethnicity, y=Prop)) +
+  geom_col() +
+  coord_flip()
+
+
+
+
+# What are interesting things to explore in the dataset?
+
+# Province
+# Area
+# Direction
+# Wealth score
+# melevel # I guess education mother
+# Age
+# Ethnicity
+
+svytable(~ethnicity + hh7r, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = hh7r)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~ethnicity + windex5, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+# which wealth index variable???
+
+svytable(~melevel + HH6, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + hh7r, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = hh7r)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + windex5, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+# Pretty much all looks like you would expect
+
+
+
+# Age should not give too many surprises?
+svytable(~UB2 + hh7r, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=UB2, y=Freq, fill = hh7r)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~ethnicity + UB2, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = UB2)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~HL4 + UB2, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = UB2)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+# Vaccination documents
+
+table(mics6.ch$IM5_2, mics6.ch$UB2)
+
+svytable(~IM5_2 + UB2, design = mics_design) -> tab
+tab
+
+
+
+
+table(mics6.ch$IM5_2, mics6.ch$ethnicity)
+
+svytable(~IM5_2 + ethnicity, design = mics_design) -> tab
+tab
+
+```
+
+
+```{r inference}
+
+# Looking at two variables: Ethnicity and area (urban / rural)
+# Is there an association?
+
+# survey design 
+
+svytable(~ethnicity + HH6, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+# H0: Area not associated with race
+# H1: Area associated with race
+# svychisq(~ethnicity + HH6, design = mics_design, statistic = "Chisq") 
+# does not work??
+
+
+
+
+svychisq(~ethnicity + HH6, design = mics_design, statistic = "Chisq") 
+# X-squared = 1097.5, df = 8, p-value = 0.0003611
+
+
+
+
+
+# Getting summary statistics while accounting for survey design
+
+# what would be a numeric variable??
+# UB2
+svymean(~UB2, design = mics_design, na.rm=TRUE)
+#       mean     SE
+# UB2 2.0415 0.016
+
+svyquantile(x = ~UB2, design = mics_design, na.rm=TRUE, quantiles = 0.5) # 2
+
+
+
+svyby(formula = ~UB2, 
+      by = ~HH7,
+      design = mics_design,
+      FUN = svymean, na.rm = TRUE,
+      keep.names = FALSE) -> tab
+ggplot(data = tab, mapping = aes(x = HH7, y = UB2)) +  
+  geom_col() + 
+  labs(y = "mean age", x = "Province") # looks terrible
+
+
+# with error bars
+
+tab <- mutate(tab, lower = UB2 - se, upper = UB2 + se)
+tab
+
+ggplot(data = tab, mapping = aes(x = HH7, y = UB2, ymin = lower, ymax = upper)) +  
+  geom_col() + 
+  geom_errorbar(width = 2) +
+  labs(y = "mean age", x = "Province") # looks terrible # Error bars
+
+
+# Inference
+svyttest(formula = UB2 ~ hh6a, design = mics_design) # p-value = 0.4025
+
+
+```
+
+
+
+
+```{r immunization documents}
+
+# These questions were only asked to children <3
+
+# Immunization documents
+
+mics6.ch %>% filter(UB2 < 3) %>% count(IM2, IM5, IM11) 
+
+# New variables
+
+mics6.ch %>% count(IM5_2) # indicates source of information
+mics6.ch %>% count(recall) # recall or not
+# but is not perfectly clear; there is also "mothers report" option on vaccination card questions
+
+```
+
+
+
+
+```{r hep B birth dose}
+
+# Subset kids
+mics6.ch %>% filter(UB2 < 3) -> mics6.ch_2
+
+# Survey design again, based on option 2
+
+mics_design_2 <- svydesign(data = mics6.ch_2, 
+                           weights = ~chweight, 
+                           id = ~strata+HH1)
+mics_design_2
+
+
+# Age should not give too many surprises?
+svytable(~hbv_bd_3 + HH6, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+
+ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+
+# Urban Rural
+svytable(~hbv_bd_3 + hh6a, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+
+ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = hh6a)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+
+# melevel
+svytable(~hbv_bd_3 + melevel, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+
+ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = melevel)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~hbv_bd_3 + HH7, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = HH7)) +
+  geom_col(position = "fill") +
+  coord_flip()
+tab
+
+
+
+tab %>% group_by(HH7)  %>% mutate(prop = Freq/sum(Freq)) -> tab
+tab
+
+
+
+
+
+```
+
+
+
+```{r descriptive}
+
+# Descriptive
+
+
+svytable(~ethnicity + hh7r, design = mics_design) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = hh7r)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+
+
+mics6.ch_2 %>% count(windex5) # no zero
+levels(mics6.ch_2$windex5)    # need to take out the 0
+
+svytable(~ethnicity + windex5, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+# which wealth index variable???
+# What is zero?
+
+
+
+svytable(~melevel + HH6, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+
+svytable(~melevel + hh7r, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = hh7r)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + windex5, design = mics_design_2) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+#tab
+
+
+
+
+```
+
+
+
+
+```{r notes}
+
+# Numbers only for subset?
+
+```
+
+
+
+```{r immunization day}
+
+# immunisation day
+
+mics6.ch %>% count(IM8A) # which is this?
+
+# A NATIONAL POLIO CAMPAIGN
+# B NATIONAL MEASLES CAMPAIGN
+# C NATIONAL IMMUNIZATION DAY
+# D PROVINCIAL HEALTH DAY
+
+```
+
+
+```{r compare survey weights}
+
+# Ethnicity
+
+mics6.ch_2 %>% 
+  as_survey(weights = c(chweight)) %>% 
+  group_by(ethnicity) %>% 
+  summarize(n = survey_total()) -> tab
+tab
+
+# and the other way:u
+svytable(~ethnicity, design = mics_design_2) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = Freq / sum(Freq))
+
+
+
+# HBV birth dose
+
+mics6.ch_2 %>% 
+  as_survey(weights = c(chweight)) %>% 
+  group_by(hbv_bd_2) %>% 
+  summarize(n = survey_total()) -> tab
+tab
+
+
+svytable(~hbv_bd_2, design = mics_design_2) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = Freq / sum(Freq))
+
+
+
+mics6.ch_2 %>% count(UB2)
+
+mics6.ch %>% filter(CAGE <= 36) # 7165 children
+
+mics6.ch %>% count(UB2, CAGE)
+
+
+
+mics6.ch %>% count(UB2, CAGE, hbv_bd_4)
+
+```
+
+
+
+
+
+## Data: mics.hh
+
+
+```{r check sampling}
+
+mics6.hh %>% tabyl(HH7, HH6) # Provinces explicit strata; area implicit strata
+
+# https://www.restore.ac.uk/PEAS/sratheory.php
+
+#  ‘Explicit stratification’ is where the population of sampling units is explicitly divided into strata and a separate sample selected per stratum. ‘Implicit stratum’ is where the population of sampling units is sorted by some characteristic(s) and then the sample is selected from the sorted list using a fixed sampling interval and a random start. 
+
+```
+
+
+
+
+
+
+```{r notes}
+
+# If error code
+
+# https://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
+# https://stackoverflow.com/questions/55975478/problems-due-to-having-too-many-single-psus-at-stage-one
+
+# Some PSU only have one: If only one PSU is sampled from a particular stratum the variance can't be computed (there is no unbiased estimator and the standard estimator gives 0/0).
+
+
+# Work around
+
+#options(survey.adjust.domain.lonely=TRUE)
+#options(survey.lonely.psu="adjust")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
