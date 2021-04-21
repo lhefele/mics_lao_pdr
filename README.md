@@ -1,4 +1,17 @@
 # mics_lao_pdr
-This is a line from Rstudio
 
-Today is Thursday
+
+Analysis of the Multiple Indicator Cluster Surveys from the Lao PDR
+
+
+Survey rounds:
+
+2000
+2006
+2012
+2017
+
+
+
+
+
