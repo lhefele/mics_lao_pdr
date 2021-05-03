@@ -95,39 +95,39 @@ mics4.wm_var$UF4
 
 # Merge joining variables from dataset woman to dataset children_2017 using as key variable: UF4 (mothers or caretakers line number in ch.sav).
 # Common variables used to merge are: HH1, HH2, UF4 in children, LN in women
-mics4.ch2 <- merge(mics4.ch, mics4.wm_var, by=c("HH1", "HH2", "UF4"), all.x = TRUE)
+mics4.ch_wm <- merge(mics4.ch, mics4.wm_var, by=c("HH1", "HH2", "UF4"), all.x = TRUE)
 
-mics4.ch %>% count(CAGE, IM14)
+mics4.ch %>% count(CAGE, AG2)
 
 #subset children under 3
-mics4.ch2 %>% filter(CAGE < 36) -> mics4.ch # 6591
+mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1 # 6591 when using CAGE, # 6573 using AG2, difference is because there are 19 children who are 3 years and 35 months, and 1 child 36 month and 2 years old. 
 
 ```
 
 ```{r recall or not}
 
 # # If response to IM5 and IM6 was always No or DK; child did not receive any vaccination! And will result in NA in recall questions
-mics4.ch %>% count(IM5, IM6, IM19A, IM19B, IM19C)
+mics4.ch_b1 %>% count(IM5, IM6, IM19A, IM19B, IM19C)
 
 
 # New variable: IM5_IM6 = 0 when there was no recall questions done anymore. entry 1 from IM5 also stops the questionnaire.!!
 
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(IM5_IM6 = ifelse((IM5 == 2 | IM5 == 8) | 
-                            (IM6 == 2 | IM6 == 8), 0, 1)) -> mics4.ch
-mics4.ch %>% count(IM5_IM6, IM5, IM6)
+                            (IM6 == 2 | IM6 == 8), 0, 1)) -> mics4.ch_b1
+mics4.ch_b1 %>% count(IM5_IM6, IM5, IM6)
 
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(IM5_IM6_1 = ifelse((IM5 == 2 | IM5 == 8) | 
-                            (IM6 == 2 |IM6 == 8 | IM6 == 9), 0, 1)) -> mics4.ch
-mics4.ch %>% count(IM5_IM6_1, IM5, IM6)
+                            (IM6 == 2 |IM6 == 8 | IM6 == 9), 0, 1)) -> mics4.ch_b1
+mics4.ch_b1 %>% count(IM5_IM6_1, IM5, IM6)
 
 
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(IM5_2 = ifelse((IM5_IM6 == 0 & IM5 == 2), 2,
-                  ifelse((IM5_IM6 == 0 & IM5 == 8), 8, NA))) -> mics4.ch
+                  ifelse((IM5_IM6 == 0 & IM5 == 8), 8, NA))) -> mics4.ch_b1
 
-mics4.ch %>% count(IM5,IM5_2)
+mics4.ch_b1 %>% count(IM5,IM5_2)
 # is this variable necessary?
 
 ```
@@ -135,20 +135,20 @@ mics4.ch %>% count(IM5,IM5_2)
 ```{r date of birth}
 
 # Date of birth 
-mics4.ch %>% count(AG1D)
-mics4.ch %>% count(AG1M)
+mics4.ch_b1 %>% count(AG1D)
+mics4.ch_b1 %>% count(AG1M)
 
-class(mics4.ch$UB1M)
+class(mics4.ch_b1$UB1M)
 
-mics4.ch$AG1D_2 <- as.numeric(mics4.ch$AG1D)
+mics4.ch_b1$AG1D_2 <- as.numeric(mics4.ch_b1$AG1D)
 
-mics4.ch$AG1M_2 <- as.numeric(mics4.ch$AG1M)
+mics4.ch_b1$AG1M_2 <- as.numeric(mics4.ch_b1$AG1M)
 
-mics4.ch$AG1Y_2 <- as.numeric(mics4.ch$AG1Y)
+mics4.ch_b1$AG1Y_2 <- as.numeric(mics4.ch_b1$AG1Y)
 
-mics4.ch %>%  mutate(dob_ch = make_date(AG1Y_2, AG1M_2, AG1D_2)) -> mics4.ch
-mics4.ch$dob_ch
-class(mics4.ch$AG1M_2)
+mics4.ch_b1 %>%  mutate(dob_ch = make_date(AG1Y_2, AG1M_2, AG1D_2)) -> mics4.ch_b1
+mics4.ch_b1$dob_ch
+class(mics4.ch_b1$AG1M_2)
 
 ```
 
@@ -159,21 +159,21 @@ class(mics4.ch$AG1M_2)
 
 # Convert to numeric values: day/ month/ year
 
-mics4.ch$IM3H0D_2 <- as.numeric(mics4.ch$IM3H0D)
-mics4.ch$IM3H0M_2 <- as.numeric(mics4.ch$IM3H0M)
-mics4.ch$IM3H0Y_2 <- as.numeric(mics4.ch$IM3H0Y)
+mics4.ch_b1$IM3H0D_2 <- as.numeric(mics4.ch_b1$IM3H0D)
+mics4.ch_b1$IM3H0M_2 <- as.numeric(mics4.ch_b1$IM3H0M)
+mics4.ch_b1$IM3H0Y_2 <- as.numeric(mics4.ch_b1$IM3H0Y)
 
 # Now create the date
-mics4.ch %>% mutate(IM3H0_date = make_date(IM3H0Y_2, IM3H0M_2, IM3H0D_2)) -> mics4.ch
-mics4.ch %>% count(IM3H0_date) # looks ok
+mics4.ch_b1 %>% mutate(IM3H0_date = make_date(IM3H0Y_2, IM3H0M_2, IM3H0D_2)) -> mics4.ch_b1
+mics4.ch_b1 %>% count(IM3H0_date) # looks ok
 
 
 # Time since vaccination
 
 # I am using a command from R base here. There is probably a way to calculate it with a tidyverse command
 
-mics4.ch$IM3H0_time <- as.numeric(difftime(mics4.ch$IM3H0_date, mics4.ch$dob_ch, units = "days"))
-summary(mics4.ch$IM3H0_time)
+mics4.ch_b1$IM3H0_time <- as.numeric(difftime(mics4.ch_b1$IM3H0_date, mics4.ch_b1$dob_ch, units = "days"))
+summary(mics4.ch_b1$IM3H0_time)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
 # -365.00    0.00    0.00   17.44    6.50  688.00    5100 
 
@@ -183,28 +183,28 @@ summary(mics4.ch$IM3H0_time)
 
 
 # histogram
-mics4.ch %>% ggplot(aes(x=IM3H0_time)) + geom_histogram(binwidth = 1)
+mics4.ch_b1 %>% ggplot(aes(x=IM3H0_time)) + geom_histogram(binwidth = 1)
 
 # Card: vaccinated within 24 hours
 
-mics4.ch %>% 
-  mutate(hepb0_C24 = ifelse(IM3H0_time == 0, "The same day", ifelse(IM3H0_time == 1, "The next day", "Later"))) -> mics4.ch
-mics4.ch %>% count(hepb0_C24) 
+mics4.ch_b1 %>% 
+  mutate(hepb0_C24 = ifelse(IM3H0_time == 0, "The same day", ifelse(IM3H0_time == 1, "The next day", "Later"))) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C24) 
 
 # some children can have NA because they have no date of birth instead of no date on vaccination!! They have no info on time since vaccination (IM3H0_time), but that doesn't mean that they are not vaccinated. Check by comparing info on dob and date of vaccination. 
 
-mics4.ch %>% mutate(dov_1 = if_else(IM3H0D <= 31 & IM3H0D >=1, 1, 0)) -> mics4.ch
-mics4.ch %>% mutate(dob_1 = if_else(AG1D <= 31 & AG1D >=1, 1, 0)) -> mics4.ch
-mics4.ch %>% count(dov_1, dob_1, hepb0_C24)
+mics4.ch_b1 %>% mutate(dov_1 = if_else(IM3H0D <= 31 & IM3H0D >=1, 1, 0)) -> mics4.ch_b1
+mics4.ch_b1 %>% mutate(dob_1 = if_else(AG1D <= 31 & AG1D >=1, 1, 0)) -> mics4.ch_b1
+mics4.ch_b1 %>% count(dov_1, dob_1, hepb0_C24)
 #24 children have a date on vaccination but no date on birth, therefore the time difference can not be calculated. They are in the category NA, while they should be in the category 'later'. 
 #2 children have dates on both vaccination and birth but have NA on hepb0_C24. Why? normally they should be categorized in "LAter". Maybe because the have a negative time??
 
 #change date variables into categorical variables
-mics4.ch %>% mutate(hepb0_C = if_else(IM3H0D <= 31 & IM3H0D >=1, 1,
+mics4.ch_b1 %>% mutate(hepb0_C = if_else(IM3H0D <= 31 & IM3H0D >=1, 1,
                                         if_else(IM3H0D == 0, 0,
                                         if_else(IM3H0D == 44, 44, 
-                                        if_else(IM3H0D == 66, 66,99))))) -> mics4.ch
-mics4.ch %>% count(hepb0_C)
+                                        if_else(IM3H0D == 66, 66,99))))) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C)
 
 # Code variable hepb0_C
 # if date is there = 1
@@ -214,66 +214,66 @@ mics4.ch %>% count(hepb0_C)
 # not given = 0
 
 
-mics4.ch %>% count(hepb0_C, hepb0_C24) # There are 24 + 2 people for which the the categorization did not work - why? - because there is no date of birth or negative one. 
+mics4.ch_b1 %>% count(hepb0_C, hepb0_C24) # There are 24 + 2 people for which the the categorization did not work - why? - because there is no date of birth or negative one. 
 
 # combination of card within 24 hours and card date variable
-mics4.ch %>% 
-  unite(hepb0_C, c(hepb0_C, hepb0_C24), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch
-mics4.ch %>% count(hepb0_C)
+mics4.ch_b1 %>% 
+  unite(hepb0_C, c(hepb0_C, hepb0_C24), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C)
 
 
 # NA_NA needs to be replaced with NA
-mics4.ch %>% replace_with_na(replace = list(hepb0_C = "NA_NA")) -> mics4.ch
-mics4.ch %>% count(hepb0_C)
+mics4.ch_b1 %>% replace_with_na(replace = list(hepb0_C = "NA_NA")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C)
 
 
 # Recall variable IM14 hepb0 within 24 hours or later
 # Recode IM14 into hepb0_R: recall variable
 
-mics4.ch %>% count(IM14)
-mics4.ch$IM14_2 <- as.numeric(mics4.ch$IM14)
-mics4.ch %>% count(IM13)
-mics4.ch$IM13_2 <- as.numeric(mics4.ch$IM13)
-mics4.ch %>% 
+mics4.ch_b1 %>% count(IM14)
+mics4.ch_b1$IM14_2 <- as.numeric(mics4.ch_b1$IM14)
+mics4.ch_b1 %>% count(IM13)
+mics4.ch_b1$IM13_2 <- as.numeric(mics4.ch_b1$IM13)
+mics4.ch_b1 %>% 
   mutate(hepb0_R_14 = recode(IM14_2,
                            "1" = "R_Yes",
                            "2" = "R_Later",
-                           "9" = "R_9")) -> mics4.ch
-mics4.ch %>% 
+                           "9" = "R_9")) -> mics4.ch_b1
+mics4.ch_b1 %>% 
   mutate(hepb0_R_13 = recode(IM13_2,
                            "1" = "R_Yes",
                            "2" = "R_No",
                            "8" = "R_8",
-                           "9" = "R_9")) -> mics4.ch
-mics4.ch %>% count(hepb0_C, hepb0_R_13, hepb0_R_14)
+                           "9" = "R_9")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C, hepb0_R_13, hepb0_R_14)
 
 
-mics4.ch %>% count(hepb0_C, hepb0_R_13, hepb0_R_14, IM6)
+mics4.ch_b1 %>% count(hepb0_C, hepb0_R_13, hepb0_R_14, IM6, IM5)
 
 # It is not yet correct
 # In IM6; if responses were No, DK or Missing; there was no probing for the recall of vaccinations
 # Therefore; some of the NAs in the new variable need to be changed to "No" or "DK" or Missing
 
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 2, "R_No"))  %>%
   mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 8, "R_8"))  %>%
-  mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 9, "R_9")) -> mics4.ch
-mics4.ch %>% count(hepb0_R_13)
-mics4.ch %>% count(hepb0_C, hepb0_R_13, hepb0_R_14)
+  mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 9, "R_9")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_R_13)
+mics4.ch_b1 %>% count(hepb0_C, hepb0_R_13, hepb0_R_14)
 
 # Combine Recall variable 13 and 14 into one recall variable
-mics4.ch %>% 
-  unite(hepb0_R, c(hepb0_R_13, hepb0_R_14), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch
-mics4.ch %>% count(hepb0_C)
+mics4.ch_b1 %>% 
+  unite(hepb0_R, c(hepb0_R_13, hepb0_R_14), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C)
 
-mics4.ch %>% mutate(hepb0_RC = coalesce(hepb0_C, hepb0_R)) -> mics4.ch 
-mics4.ch %>% count(hepb0_RC)
+mics4.ch_b1 %>% mutate(hepb0_RC = coalesce(hepb0_C, hepb0_R)) -> mics4.ch_b1 
+mics4.ch_b1 %>% count(hepb0_RC)
 
 # Now, all responses should be categorized correctly, at least all NA's. 
 # Except for 44_NA -> 1_Later: Marked on card, not known whether within 24 hrs
 # and 66_NA -> which should be categorized as recall, mother reported that there was a vaccination but not sure whether within 24 hours 
 
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_RC = recode(hepb0_RC,
                            "0_NA" = "0",
                            "1_NA" = "1_Later", 
@@ -285,8 +285,8 @@ mics4.ch %>%
                            "R_No_NA" = "R_No",
                            "R_Yes_R_9" = "R_Later",
                            "R_Yes_R_Later" = "R_Later",
-                           "R_Yes_R_Yes" = "R_Yes" )) -> mics4.ch
-mics4.ch %>% count(hepb0_RC)
+                           "R_Yes_R_Yes" = "R_Yes" )) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_RC)
 
 # hepatitis B birth dose (yes, no)
 # DK will be grouped with no
@@ -294,7 +294,7 @@ mics4.ch %>% count(hepb0_RC)
 # Within 24 hours or the next day: 1
 # later: 2
 # no vaccination: 0
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_RC_1 = recode(hepb0_RC,
                            "0" = "0",
                            "1_Later" = "2",
@@ -304,36 +304,36 @@ mics4.ch %>%
                            "R_8" = "0",
                            "R_9" = "0",
                            "R_Later" = "2",
-                           "R_Yes" = "1")) -> mics4.ch
+                           "R_Yes" = "1")) -> mics4.ch_b1
 
-mics4.ch %>% count(hepb0_RC_1, hepb0_RC)
+mics4.ch_b1 %>% count(hepb0_RC_1, hepb0_RC)
 
 
 # create new variable within 24 hours: 1, not within 24 hours:0
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_RC_24 = recode(hepb0_RC_1,
                            "0" = "0",
                            "2" = "0",
                            "1" = "1"
-                          )) -> mics4.ch
-mics4.ch %>% count(hepb0_RC_24)
+                          )) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_RC_24)
 
 # create new variable hepb0 yes or no card and recall
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_RC_2 = recode(hepb0_RC_1,
                            "0" = "0",
                            "2" = "1",
                            "1" = "1"
-                          )) -> mics4.ch
-mics4.ch %>% count(hepb0_RC_2)
+                          )) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_RC_2)
 
 # only card
 # 66_NA needs to be replaced with NA
-mics4.ch %>% replace_with_na(replace = list(hepb0_C = "66_NA")) -> mics4.ch
-mics4.ch %>% count(hepb0_C)
+mics4.ch_b1 %>% replace_with_na(replace = list(hepb0_C = "66_NA")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C)
 
 # only card variable hepb0 (yes/no)
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_C_2 = recode(hepb0_C,
                            "0_NA" = "0",
                            "1_Later" = "1",
@@ -341,11 +341,11 @@ mics4.ch %>%
                            "1_The next day" = "1",
                            "1_The same day" = "1",
                            "44_NA" = "1",
-                           "99_NA" = "0")) -> mics4.ch
-mics4.ch %>% count(hepb0_C_2)
+                           "99_NA" = "0")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C_2)
 
 # only card variable hepb0 (24hrs)
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_C_24 = recode(hepb0_C,
                            "0_NA" = "0",
                            "1_Later" = "0",
@@ -353,45 +353,45 @@ mics4.ch %>%
                            "1_The next day" = "1",
                            "1_The same day" = "1",
                            "44_NA" = "0",
-                           "99_NA" = "0")) -> mics4.ch
-mics4.ch %>% count(hepb0_C_24)
+                           "99_NA" = "0")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_C_24)
 
-mics4.ch$hepb0_R_1 <- mics4.ch$hepb0_RC
-mics4.ch %>% count(hepb0_R_1)
+mics4.ch_b1$hepb0_R_1 <- mics4.ch_b1$hepb0_RC
+mics4.ch_b1 %>% count(hepb0_R_1)
 
 # all outcomes from Card need to be replaced with NA: hepb0_RC is now variable hepb0_R with recall from card variable outcome 66
-mics4.ch %>% replace_with_na(replace = list(hepb0_R_1 = c("0", "1_Later", "1_The next day", "1_The same day"))) -> mics4.ch
-mics4.ch %>% count(hepb0_R_1)
+mics4.ch_b1 %>% replace_with_na(replace = list(hepb0_R_1 = c("0", "1_Later", "1_The next day", "1_The same day"))) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_R_1)
 
 # only recal hepbo within 24 hours (yes/no)
-mics4.ch %>%
+mics4.ch_b1 %>%
   mutate(hepb0_R_24 = recode(hepb0_R_1,
                            "R_No" = "0",
                            "R_8" = "0",
                            "R_9" = "0",
                            "R_Later" = "0",
-                           "R_Yes" = "1")) -> mics4.ch
-mics4.ch %>% count(hepb0_R_24)
+                           "R_Yes" = "1")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_R_24)
 
 # only recall variable hepb0 (yes/no)
-mics4.ch %>% 
+mics4.ch_b1 %>% 
   mutate(hepb0_R_2 = recode(hepb0_R_1,
                            "R_No" = "0",
                            "R_8" = "0",
                            "R_9" = "0",
                            "R_Later" = "1",
                            "R_Yes" = "1"
-                          )) -> mics4.ch
-mics4.ch %>% count(hepb0_R_2)
+                          )) -> mics4.ch_b1
+mics4.ch_b1 %>% count(hepb0_R_2)
 
 
 # Needed dichotomous variables for analysis
-mics4.ch %>% count(hepb0_RC_2) # 0: 3451 1: 3140
-mics4.ch %>% count(hepb0_RC_24)# 0: 5303 1: 1288
-mics4.ch %>% count(hepb0_C_2)  # 0: 1198 1: 1656
-mics4.ch %>% count(hepb0_C_24) # 0: 1942 1: 912
-mics4.ch %>% count(hepb0_R_2) # 0: 2253 1: 1484
-mics4.ch %>% count(hepb0_R_24) # 0: 3361 1: 376
+mics4.ch_b1 %>% count(hepb0_RC_2) # 0: 3444 1: 3129
+mics4.ch_b1 %>% count(hepb0_RC_24)# 0: 5287 1: 1286
+mics4.ch_b1 %>% count(hepb0_C_2)  # 0: 1197 1: 1653
+mics4.ch_b1 %>% count(hepb0_C_24) # 0: 1939 1: 911
+mics4.ch_b1 %>% count(hepb0_R_2) # 0: 2247 1: 1476
+mics4.ch_b1 %>% count(hepb0_R_24) # 0: 3348 1: 375
 
 
 
@@ -401,34 +401,34 @@ mics4.ch %>% count(hepb0_R_24) # 0: 3361 1: 376
 
 ```{r pentavalent 1}
 
-mics4.ch %>% filter(CAGED > 365) -> mics4.ch_1
+mics4.ch_b1 %>% filter(CAGED > 365) -> mics4.ch_p1
 
 # Penta 1 Only Card
 
-mics4.ch_1 %>% count(IM3H1D)
+mics4.ch_p1 %>% count(IM3H1D)
 
 #change date variables into categorical variables
-mics4.ch_1 %>% mutate(penta1_C = if_else(IM3H1D <= 31 & IM3H1D >=1, 1,
+mics4.ch_p1 %>% mutate(penta1_C = if_else(IM3H1D <= 31 & IM3H1D >=1, 1,
                                         if_else(IM3H1D == 0, 0,
                                         if_else(IM3H1D == 44, 44,
-                                        if_else(IM3H1D == 99, 99, 66))))) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_C)
+                                        if_else(IM3H1D == 99, 99, 66))))) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_C)
 
-mics4.ch_1 %>% 
+mics4.ch_p1 %>% 
   mutate(penta1_C = recode(penta1_C,
                            "44" = "1",
                            "66" = "66",
                            "99" = "0",
                            "1" = "1",
                            "0" = "0"
-                           )) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_C)
+                           )) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_C)
 
 # 66 needs to be replaced with NA because this is recall info and not card info
 # penta1_C_1: only card variable
-mics4.ch_1$penta1_C_1 <- mics4.ch_1$penta1_C
-mics4.ch_1 %>% replace_with_na(replace = list(penta1_C_1 = "66")) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_C_1)
+mics4.ch_p1$penta1_C_1 <- mics4.ch_p1$penta1_C
+mics4.ch_p1 %>% replace_with_na(replace = list(penta1_C_1 = "66")) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_C_1)
 
 
 # Penta 1 only recall
@@ -437,53 +437,55 @@ mics4.ch_1 %>% count(penta1_C_1)
 
 # First recode IM11 into penta1_R: recall variable
 
-mics4.ch_1 %>% count(IM11)
-mics4.ch_1$IM11_2 <- as.numeric(mics4.ch_1$IM11)
+mics4.ch_p1 %>% count(IM11)
+mics4.ch_p1$IM11_2 <- as.factor(mics4.ch_p1$IM11)
 
-mics4.ch_1 %>% 
+mics4.ch_p1 %>% 
   mutate(penta1_R = recode(IM11_2,
                            "1" = "R_1",
                            "2" = "R_0",
-                           "8" = "R_8")) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_R)
+                           "8" = "R_8")) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_R)
 
-mics4.ch_1 %>% count(penta1_R, IM5, IM6)
+mics4.ch_p1 %>% count(penta1_R, IM5, IM6, penta1_C)
+mics4.ch_p1 %>% count(IM6, penta1_C)
+
 
 # It is not yet correct
 # In IM6; if all responses were "NO"; there was no probing for the recall of vaccinations
-# Therefore; some of the NAs in the new variable need to be changed to "No" or "DK" #810 no and #24 DK
+# Therefore; some of the NAs in the new variable need to be changed to "No" or "DK" #564 no and #11 DK and 3 missing
 
-mics4.ch_1 %>% 
-  mutate(penta1_R = replace(penta1_R, is.na(penta1_R) & IM11 == 2, "R_0"))  %>%
-  mutate(penta1_R = replace(penta1_R, is.na(penta1_R) & 
-                               IM11 == 8, "R_8")) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_R)
+
+mics4.ch_p1 %>% 
+  mutate(penta1_R = replace(penta1_R, is.na(penta1_R) & IM6 == 2, "R_0"))  %>%
+  mutate(penta1_R = replace(penta1_R, is.na(penta1_R) & IM6 == 8, "R_8")) %>%
+  mutate(penta1_R = replace(penta1_R, is.na(penta1_R) & IM6 == 9, "R_0")) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_R)
 
 
 # combine Recall and Card
 
-mics4.ch_1 %>% mutate(penta1_RC = coalesce(penta1_R, penta1_C)) -> mics4.ch_1 
-mics4.ch_1 %>% count(penta1_RC)
+mics4.ch_p1 %>% mutate(penta1_RC = coalesce(penta1_R, penta1_C)) -> mics4.ch_p1 
+mics4.ch_p1 %>% count(penta1_RC)
 
 # Now, all responses should be categorized correctly !!!
-# Except for 44_NA -> 1_Later: Marked on card, not known whether within 24 hrs
-# and 66_NA -> which should be categorized as recall, mother reported that there was a vaccination but not sure whether within 24 hours 
+# Except for R_8 -> R_0 # and 66 -> which should be categorized as recall, mother reported that there was a vaccination but not sure whether within 24 hours 
 
-mics4.ch_1 %>% 
+mics4.ch_p1 %>% 
   mutate(penta1_R_1 = recode(penta1_RC,
                             "66" = "R_1",
                            "R_0" = "R_0",
                            "R_1" = "R_1",
                            "R_8" = "R_0"
-                           )) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_R_1)
+                           )) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_R_1)
 
 # all outcomes from card RC need to be replaced with NA to only retain recall
-mics4.ch_1 %>% replace_with_na(replace = list(penta1_R_1 = c("0", "1"))) -> mics4.ch_1
-mics4.ch_1 %>% count(penta1_R_1)
+mics4.ch_p1 %>% replace_with_na(replace = list(penta1_R_1 = c("0", "1"))) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta1_R_1)
 
 # combination recall and card
-mics4.ch_1 %>%
+mics4.ch_p1 %>%
   mutate(penta1_RC_1 = recode(penta1_RC,
                               "0" = 0,
                               "1" = 1,
@@ -491,15 +493,140 @@ mics4.ch_1 %>%
                               "R_0" = 0,
                               "R_1" = 1,
                               "R_8" = 0
-                              )) -> mics4.ch_1
+                              )) -> mics4.ch_p1
 
-mics4.ch_1 %>% count(penta1_RC_1) # 0: 1340 1: 3200
-mics4.ch_1 %>% count(penta1_R_1) # 0: 1051 1: 1376
-mics4.ch_1 %>% count(penta1_C_1) # 0: 289 1: 1824
+mics4.ch_p1 %>% count(penta1_RC_1) # 0: 940 1: 3374
+mics4.ch_p1 %>% count(penta1_R_1) # 0: 867 1: 1605
+mics4.ch_p1 %>% count(penta1_C_1) # 0: 73 1: 1769
 
 ```
+### Pentavalent 2
 
-```{r}
+```{r pentavalent 2}
+
+
+# Penta 2 Only Card
+
+mics4.ch_p1 %>% count(IM3H2D)
+
+#change date variables into categorical variables
+mics4.ch_p1 %>% mutate(penta2_C = if_else(IM3H2D <= 31 & IM3H2D >=1, 1,
+                                        if_else(IM3H2D == 0, 0,
+                                        if_else(IM3H2D == 44, 44,
+                                        if_else(IM3H2D == 99, 99, 66))))) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_C)
+
+mics4.ch_p1 %>% 
+  mutate(penta2_C = recode(penta2_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "99" = "0",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info
+# penta2_C_1: only card variable
+mics4.ch_p1$penta2_C_1 <- mics4.ch_p1$penta2_C
+mics4.ch_p1 %>% replace_with_na(replace = list(penta2_C_1 = "66")) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_C_1)
+
+
+# Penta 2 only recall
+
+
+
+# First recode IM11 into penta2_R: recall variable
+
+mics4.ch_p1 %>% count(IM12)
+mics4.ch_p1$IM12_2 <- as.numeric(mics4.ch_p1$IM12)
+
+mics4.ch_p1 %>% 
+  mutate(penta2_R = recode(IM12_2,
+                           "1" = "R_1",
+                           "2" = "R_2",
+                           "3" = "R_3",
+                           "4" = "R_4",
+                           "5" = "R_5",
+                           "6" = "R_6",
+                           "7" = "R_7",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_R)
+
+# mics4.ch_p1 %>% count(penta2_R, IM5, IM6, penta2_C)
+# mics4.ch_p1 %>% count(IM6, penta2_C)
+
+# It is not yet correct
+# In IM6; if all responses were "NO"; there was no probing for the recall of vaccinations
+# Therefore; some of the NAs in the new variable need to be changed to "No" or "DK" #564 no and #11 DK and 3 missing
+
+
+mics4.ch_p1 %>% 
+  mutate(penta2_R = replace(penta2_R, is.na(penta2_R) & IM6 == 2, "R_0"))  %>%
+  mutate(penta2_R = replace(penta2_R, is.na(penta2_R) & IM6 == 8, "R_8")) %>%
+  mutate(penta2_R = replace(penta2_R, is.na(penta2_R) & IM6 == 9, "R_9")) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_R) 
+mics4.ch_p1 %>% count(penta1_R)
+
+
+# make a new variable combining IM20 and IM21. 
+# IM 21: 2,3,4,5,6 of 7 means having the second pentavalent vaccine, IM21: 1,8 or 9 had only one or dont know whether they had one pentavalent vaccine or more, therefore do not include them assign to 0 together with IM20 No and DK = penta1_R.
+
+mics4.ch_p1 %>% mutate(penta2_R_3 = coalesce(penta2_R, penta1_R)) -> mics4.ch_p1 
+mics4.ch_p1 %>% count(penta2_R_3)
+
+# Recode recall variable penta 2 into yes or no
+
+mics4.ch_p1 %>% 
+  mutate(penta2_R_2 = recode(penta2_R_3,
+                           "R_0" = "R_0",
+                           "R_1" = "R_0",
+                           "R_2" = "R_1",
+                           "R_3" = "R_1",
+                           "R_4" = "R_1",
+                           "R_5" = "R_1",
+                           "R_6" = "R_1",
+                           "R_7" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_R_2)
+
+# combine Recall and Card
+
+mics4.ch_p1 %>% mutate(penta2_RC = coalesce(penta2_R_2, penta2_C)) -> mics4.ch_p1 
+mics4.ch_p1 %>% count(penta2_RC)
+
+# Now, all responses should be categorized correctly !!!
+# Except for R_8 -> R_0 # and 66 -> which should be categorized as recall, mother reported that there was a vaccination but not sure whether within 24 hours 
+
+mics4.ch_p1 %>% 
+  mutate(penta2_R_1 = recode(penta2_RC,
+                            "66" = "R_1",
+                           "R_0" = "R_0",
+                           "R_1" = "R_1",
+                           )) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_R_1)
+
+# all outcomes from card RC need to be replaced with NA to only retain recall
+mics4.ch_p1 %>% replace_with_na(replace = list(penta2_R_1 = c("0", "1"))) -> mics4.ch_p1
+mics4.ch_p1 %>% count(penta2_R_1)
+
+# combination recall and card
+mics4.ch_p1 %>%
+  mutate(penta2_RC_1 = recode(penta2_RC,
+                              "0" = 0,
+                              "1" = 1,
+                              "66" = 1,
+                              "R_0" = 0,
+                              "R_1" = 1,
+                                             )) -> mics4.ch_p1
+
+mics4.ch_p1 %>% count(penta2_RC_1) # 0: 1360 1: 2954
+mics4.ch_p1 %>% count(penta2_R_1) # 0: 1186 1: 1298
+mics4.ch_p1 %>% count(penta2_C_1) # 0: 174 1: 1656
 
 ```
 
