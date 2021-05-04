@@ -764,7 +764,280 @@ mics4.ch_p1 %>% count(penta3_R_1) # 0: 1552 1: 955
 mics4.ch_p1 %>% count(penta3_C_1) # 0: 341  1: 1466
 
 
+```
 
+## Survey design
+
+### strata
+
+```{r strata}
+
+# strata
+# New variable combining HH6 and HH7
+mics4.ch_b1 %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_b1
+mics4.ch_b1 %>% count(strata)
+
+# New variable combining HH6 and HH7
+mics4.ch_p1 %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_p1
+mics4.ch_p1 %>% count(strata)
+
+# New variable combining HH6 and HH7
+mics4.ch %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch
+mics4.ch %>% count(strata)
+
+```
+
+### design
+
+```{r survey design}
+
+# Understanding the sample design
+mics4.ch %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
+mics4.ch %>% count(HH6)
+mics4.ch %>% tabyl(HH7, HH6)
+
+mics4.ch %>% count(strata) # 49 rows
+
+# How many clusters:
+
+# Provinces are strata
+mics4.ch %>% summarize(n_clusters = n_distinct(HH7, HH1))
+# 998
+
+mics4.ch %>% summarize(n_clusters = n_distinct(strata, HH1))
+# 998 # same
+
+
+# Make design for hepb0 with selected children aged under 3: n = 6573
+
+mics_design_b1 <- svydesign(data = mics4.ch_b1, 
+                         weights = ~chweight, 
+                         id = ~strata+HH1)
+
+
+# Make design for pentavalent with selected children aged under 3 and older than 1 year: n = 4314
+
+mics_design_p1 <- svydesign(data = mics4.ch_p1, 
+                         weights = ~chweight, 
+                         id = ~strata+HH1)
+
+
+
+```
+
+## Descriptives weighted
+### independent variables
+
+```{r descriptive}
+
+
+# taking survey design into account 
+
+# What are interesting things to explore in the dataset?
+
+# Province
+# Area
+# Direction?
+# Wealth score
+# melevel education mother
+# Age
+# Ethnicity
+
+tab_ethnicity <- svytable(~ethnicity, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_ethnicity
+
+tab_melevel <- svytable(~melevel, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_melevel 
+  
+tab_HL4 <- svytable(~HL4, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_HL4 
+
+tab_windex5 <- svytable(~windex5, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_windex5 
+
+tab_HH6 <- svytable(~HH6, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_HH6 
+
+tab_HH7R <- svytable(~HH7R, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_HH7R 
+
+ 
+# combination of independent variables in graphs
+
+svytable(~ethnicity + HH7R, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~ethnicity + windex5, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + HH6, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + HH7R, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + windex5, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+# Pretty much all looks like you would expect
+
+
+
+# Age should not give too many surprises?
+svytable(~AG2 + HH7R, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=AG2, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~ethnicity + AG2, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = AG2)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~HL4 + AG2, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = AG2)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+# Vaccination documents
+
+
+```
+
+### dependent variables
+
+```{r descriptives dependent variables}
+
+tab_hepb0_RC_2 <- svytable(~hepb0_RC_2, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_hepb0_RC_2 
+
+tab_hepb0_RC_24 <- svytable(~hepb0_RC_24, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_hepb0_RC_24 
+
+tab_hepb0_C_2 <- svytable(~hepb0_C_2, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_hepb0_C_2 
+
+tab_hepb0_C_24 <- svytable(~hepb0_C_24, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_hepb0_C_24 
+
+tab_hepb0_R_2 <- svytable(~hepb0_R_2, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_hepb0_R_2 
+
+tab_hepb0_R_24 <- svytable(~hepb0_R_24, design = mics_design_b1) %>%
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_hepb0_R_24 
+
+tab_penta1_RC_1 <- svytable(~penta1_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta1_RC_1 
+
+tab_penta1_R_1 <- svytable(~penta1_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta1_R_1 
+
+tab_penta1_C_1 <- svytable(~penta1_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta1_C_1 
+
+tab_penta2_RC_1 <- svytable(~penta2_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta2_RC_1 
+
+tab_penta2_R_1 <- svytable(~penta2_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta2_R_1 
+
+tab_penta2_C_1 <- svytable(~penta2_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta2_C_1 
+
+tab_penta3_RC_1 <- svytable(~penta3_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta3_RC_1 
+
+tab_penta3_R_1 <- svytable(~penta3_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta3_R_1 
+
+tab_penta3_C_1 <- svytable(~penta3_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_penta3_C_1 
 
 
 ```
