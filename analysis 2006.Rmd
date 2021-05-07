@@ -228,7 +228,7 @@ mics3.ch_p1 %>% count(tetra1_C)
 
 mics3.ch_p1$tetra1_C_1 <- mics3.ch_p1$tetra1_C
 mics3.ch_p1 %>% replace_with_na(replace = list(tetra1_C_1 = "66")) -> mics3.ch_p1
-mics3.ch_p1 %>% count(tetra1_C_1)
+mics3.ch_p1 %>% count(tetra1_C_1) # 0: 394 1: 324
 
 
 
@@ -264,7 +264,7 @@ mics3.ch_p1 %>% count(tetra2_C)
 
 mics3.ch_p1$tetra2_C_1 <- mics3.ch_p1$tetra2_C
 mics3.ch_p1 %>% replace_with_na(replace = list(tetra2_C_1 = "66")) -> mics3.ch_p1
-mics3.ch_p1 %>% count(tetra2_C_1)
+mics3.ch_p1 %>% count(tetra2_C_1) # 0: 419 1: 298
 
 
 
@@ -299,7 +299,7 @@ mics3.ch_p1 %>% count(tetra3_C)
 
 mics3.ch_p1$tetra3_C_1 <- mics3.ch_p1$tetra3_C
 mics3.ch_p1 %>% replace_with_na(replace = list(tetra3_C_1 = "66")) -> mics3.ch_p1
-mics3.ch_p1 %>% count(tetra3_C_1)
+mics3.ch_p1 %>% count(tetra3_C_1) # 0: 474 1: 238
 
 
 
@@ -573,7 +573,7 @@ mics3.ch_p1 %>% count(DPT2_C_1) # 0: 74 1: 637
 
 ```{r}
 
-# DPT 3 Only Card
+# DPT 2 Only Card
 
 mics3.ch_p1 %>% count(IM4CD)
 
@@ -582,6 +582,9 @@ mics3.ch_p1 %>% mutate(DPT3_C = if_else(IM4CD <= 31 & IM4CD >=1, 1,
                                         if_else(IM4CD == 0, 0,
                                         if_else(IM4CD == 44, 44, 66)))) -> mics3.ch_p1
 mics3.ch_p1 %>% count(DPT3_C)
+mics3.ch_p1 %>% count(DPT3_C, IM15)
+mics3.ch_p1 %>% count(DPT3_C, IM15, IM10, IM9)
+
 
 mics3.ch_p1 %>% 
   mutate(DPT3_C = recode(DPT3_C,
@@ -598,18 +601,31 @@ mics3.ch_p1$DPT3_C_1 <- mics3.ch_p1$DPT3_C
 mics3.ch_p1 %>% replace_with_na(replace = list(DPT3_C_1 = "66")) -> mics3.ch_p1
 mics3.ch_p1 %>% count(DPT3_C_1)
 
-# tetra 3 only recall
 
-mics3.ch_p1 %>% count(IM15, IM11, IM11_2, IM11_IM12)
+# DTP1 only recall
+
+mics3.ch_p1 %>% count(IM9, IM10, IM15, DPT3_C_1)
+mics3.ch_p1 %>% count(IM9, DPT3_C_1)
+mics3.ch_p1 %>% count(IM10, IM15)
 
 
 
+# First recode IM15 into DPT3_R: recall variable
 
-# First recode IM16 into tetra3_R: recall variable
+mics3.ch_p1 %>% count(IM15)
+mics3.ch_p1 %>% 
+  mutate(DPT3_R = recode(IM15,
+                           "1" = "R_1",
+                           "2" = "R_0",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_R)
+
+# Then recode IM16 into DPT3_R_2: recall variable
 
 mics3.ch_p1 %>% count(IM16)
 mics3.ch_p1 %>% 
-  mutate(DPT3_R = recode(IM16,
+  mutate(DPT3_R_2 = recode(IM16,
                            "1" = "R_1",
                            "2" = "R_2",
                            "3" = "R_3",
@@ -619,27 +635,16 @@ mics3.ch_p1 %>%
                            "7" = "R_7",
                            "8" = "R_8",
                            "9" = "R_9")) -> mics3.ch_p1
-mics3.ch_p1 %>% count(DPT3_R)
-
-
-# mics3.ch_p1 %>% count(DPT3_R, IM15, IM11, IM11_IM12)
-
-# It is not yet correct
-# In IM11 & IM12; if all responses were "NO"; there was no probing for the recall of vaccinations
-# Therefore; some of the NAs in the new variable need to be changed to "No" or "DK" #631 no and #38 DK
-
-mics3.ch_p1 %>% 
-  mutate(DPT3_R = replace(DPT3_R, is.na(DPT3_R) & IM11 == 2, "R_0"))  %>%
-  mutate(DPT3_R = replace(DPT3_R, is.na(DPT3_R) & 
-                               IM11 == 8, "R_8")) -> mics3.ch_p1
- mics3.ch_p1 %>% count(DPT3_R)
-
+mics3.ch_p1 %>% count(DPT3_R_2)
 
 # make a new variable combining IM15 and IM16. 
-# IM 21: 2,3,4,5,6 of 7 means having the second DPTvalent vaccine, IM16: 1,8 or 9 had only one or dont know whether they had one DPTvalent vaccine or more, therefore do not include them assign to 0 together with IM15 No and DK.
-mics3.ch_p1 %>% count(DPT3_R, DPT1_R)
-mics3.ch_p1 %>% mutate(DPT3_R_3 = coalesce(DPT3_R, DPT1_R)) -> mics3.ch_p1 
+# IM 21: 2,3,4,5,6 of 7 means having the second DPT vaccine, IM16: 1,8 or 9 had only one or dont know whether they had one DPT vaccine or more, therefore do not include them assign to 0 together with IM15 No and DK.
+ 
+mics3.ch_p1 %>% count(DPT3_R_2, DPT1_R)
+mics3.ch_p1 %>% mutate(DPT3_R_3 = coalesce(DPT3_R_2, DPT1_R)) -> mics3.ch_p1 
 mics3.ch_p1 %>% count(DPT3_R_3)
+
+mics3.ch_p1 %>% count(IM9, IM10, DPT3_R_3) # everything is correct, no need for replacing
 
 # Recode recall variable DPT3 into yes or no
 
@@ -661,38 +666,63 @@ mics3.ch_p1 %>% count(DPT3_R_2)
 
 # combine Recall and Card
 
-mics3.ch_p1 %>% mutate(DPT3_RC = coalesce(DPT3_R_2, DPT3_C)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT3_R_2, DPT3_C)
+
+# R_0	0	  3		
+# R_0	1	  21		
+# R_0	NA	663		
+# R_1	1	  10		
+# R_1	NA	274		
+# NA	0	  71		
+# NA	1	  606		
+# NA	NA	8
+
+# 21 children have 1 on card and value 0 on recall; 1o children have value 1 on card and 1 on recall, 8 children have no value on both card. 
+# 21 and 10 children should be counted on the card, in recall variable change for NA
+
+mics3.ch_p1 %>% mutate(DPT3_RC = coalesce(DPT3_C, DPT3_R_2)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT3_RC, IM9)
+
+# Only 1 response is still NA, not categorized. This is solved when using IM9, then the category is 2: Missing, so this response will be categorized as R_0.
+
+mics3.ch_p1 %>% 
+  mutate(DPT3_RC = replace(DPT3_RC, is.na(DPT3_RC) & IM9 == 2, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_RC)
+mics3.ch_p1 %>% 
+  mutate(DPT3_RC = replace(DPT3_RC, is.na(DPT3_RC) & IM9 == 1, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_RC)
+mics3.ch_p1 %>% 
+  mutate(DPT3_RC = replace(DPT3_RC, is.na(DPT3_RC) & IM9 == 8, "R_0")) -> mics3.ch_p1
 mics3.ch_p1 %>% count(DPT3_RC)
 
-# Now, all responses should be categorized correctly!
-# Except for 66 -> which should be categorized as recall (R_1), mother reported that there was a vaccination 
 
 mics3.ch_p1 %>% 
   mutate(DPT3_R_1 = recode(DPT3_RC,
-                            "66" = "R_1",
                            "R_0" = "R_0",
-                           "R_1" = "R_1"                                                       )) -> mics3.ch_p1
+                           "R_1" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics3.ch_p1
 mics3.ch_p1 %>% count(DPT3_R_1)
 
 # all outcomes from card RC need to be replaced with NA to only retain recall
 mics3.ch_p1 %>% replace_with_na(replace = list(DPT3_R_1 = c("0", "1"))) -> mics3.ch_p1
 mics3.ch_p1 %>% count(DPT3_R_1)
 
-
-
-# categorize combination recall and card into dichotomous variable
+# combination recall and card
 mics3.ch_p1 %>%
   mutate(DPT3_RC_1 = recode(DPT3_RC,
                               "0" = 0,
                               "1" = 1,
-                              "66" = 1,
+                              "R_9" = 0,
                               "R_0" = 0,
-                              "R_1" = 1
-                                       )) -> mics3.ch_p1
+                              "R_1" = 1,
+                              "R_8" = 0
+                              )) -> mics3.ch_p1
 
-mics3.ch_p1 %>% count(DPT3_RC_1) # 0: 2014 1: 2526
-mics3.ch_p1 %>% count(DPT3_R_1) # 0: 1571 1: 864
-mics3.ch_p1 %>% count(DPT3_C_1) # 0: 443  1: 1662
+mics3.ch_p1 %>% count(DPT3_RC_1) # 0: 962 1: 694
+mics3.ch_p1 %>% count(DPT3_R_1) # 0: 793 1: 173
+mics3.ch_p1 %>% count(DPT3_C_1) # 0: 169 1: 521
 
 ```
 
