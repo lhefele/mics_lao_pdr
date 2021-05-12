@@ -110,7 +110,7 @@ mics6.ch %>% count(UF4) # range from 1-20
 
 ```{r merging}
 # selecting subset of variables of women's dataset
-mics6.wm_var <- subset(mics6.wm, select = c("HH1", "HH2", "LN", "MN2", "MN3A", "MN3B", "MN3C", "MN3F", "MN3G", "MN3X", "MN5"))
+mics6.wm_var <- subset(mics6.wm, select = c("HH1", "HH2", "LN", "MN2", "MN3A", "MN3B", "MN3C", "MN3F", "MN3G", "MN3X", "MN5", "MN20"))
 
 # change variable name in women dataset in order to match with children's
 mics6.wm_var$UF4 <- mics6.wm_var$LN
@@ -922,7 +922,29 @@ mics6.ch_p1 %>% count(PENTA3_C_1) # 0: 443  1: 1662
 
 
 
+### antanatal care
 
+```{r}
+
+# new variable place of delivery
+mics6.ch_b1 %>% 
+  mutate(MN20_1 = recode(MN20,
+                        "11" = "1",
+                        "12" = "1",
+                        "21" = "2",
+                        "22" = "2",
+                        "26" = "2",
+                        "31" = "3",
+                        "32" = "3",
+                        "33" = "3",
+                        "36" = "3",
+                        "96" = "9",
+                        "98" = "9",
+                        "99" = "9")) -> mics6.ch_b1
+mics6.ch_b1 %>% count(MN20, MN20_1)
+mics6.wm_var %>% count(MN20)
+
+```
 
 
 
@@ -1028,6 +1050,11 @@ mics6.ch %>% count(HH6)
 
 mics6.ch %>% tabyl(HH7, HH6)
 
+# strata
+# Do I need a new variable combining HH6 and HH7?
+mics6.ch %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics6.ch
+mics6.ch %>% count(strata)
+
 mics6.ch %>% count(strata) # 50 rows
 # I am unsure what the exact number of the strata is. From what I understand, the provinces AND area (urban, rural, rural wo road) are the strata; 18x3 = 54. Or is it only the 18 provinces?
 # The cluster number at least is clear: 1160
@@ -1047,7 +1074,7 @@ mics6.ch %>% summarize(n_clusters = n_distinct(strata, HH1))
 
 # Make design for hepb0 with selected children aged under 3: n = 6887
 
-mics_design <- svydesign(data = mics6.ch, 
+mics_design <- svydesign(data = mics6.ch_b1, 
                          weights = ~chweight, 
                          id = ~strata+HH1)
 mics_design
@@ -1066,7 +1093,7 @@ mics_design1
 ```
 
 ## Descriptives weighted
-
+### independent variables
 ```{r descriptive}
 
 
@@ -1252,20 +1279,67 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = UB2)) +
   coord_flip()
 
 
-# Vaccination documents
 
-table(mics6.ch$IM5_2, mics6.ch$UB2)
+```
 
-svytable(~IM5_2 + UB2, design = mics_design) -> tab
-tab
+### antenatal care variables
 
+```{r}
+# place of delivery: MN20
+mics6.ch_b1 %>% count(MN20_1)
+tab_MN20 <- svytable(~MN20_1, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN20 
 
+# received antenatal care: MN1
+tab_MN1 <- svytable(~MN1, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN1 
 
+# times received antenatal care: MN3
+tab_MN3 <- svytable(~MN3, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN3 
 
-table(mics6.ch$IM5_2, mics6.ch$ethnicity)
+# antenatal care provider MN2
+mics6.ch_b1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2X)
 
-svytable(~IM5_2 + ethnicity, design = mics_design) -> tab
-tab
+tab_MN2A <- svytable(~MN2A, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2A 
+tab_MN2B <- svytable(~MN2B, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2B
+tab_MN2C <- svytable(~MN2C, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2C
+tab_MN2F <- svytable(~MN2F, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2F
+tab_MN2G <- svytable(~MN2G, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2G
+tab_MN2X <- svytable(~MN2X, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2X
 
 ```
 

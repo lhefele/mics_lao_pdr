@@ -1081,6 +1081,7 @@ tab_DPT3_C_1 <- svytable(~DPT3_C_1, design = mics_design_p1) %>%
 tab_DPT3_C_1 
 
 ```
+## Inference
 
 ```{r inference}
 
@@ -1089,7 +1090,7 @@ tab_DPT3_C_1
 
 # survey design 
 
-svytable(~HC1C + HH6, design = mics_design) -> tab
+svytable(~HC1C + HH6, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
 ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = HH6)) +
@@ -1105,7 +1106,7 @@ ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = HH6)) +
 
 
 
-svychisq(~HC1C + HH6, design = mics_design, statistic = "Chisq") 
+svychisq(~HC1C + HH6, design = mics_design_b1, statistic = "Chisq") 
 # X-squared = 1097.5, df = 8, p-value = 0.0003611
 
 
@@ -1116,17 +1117,17 @@ svychisq(~HC1C + HH6, design = mics_design, statistic = "Chisq")
 
 # what would be a numeric variable??
 # UF11
-svymean(~UF11, design = mics_design, na.rm=TRUE)
+svymean(~UF11, design = mics_design_b1, na.rm=TRUE)
 #       mean     SE
 # UF11 2.0415 0.016
 
-svyquantile(x = ~UF11, design = mics_design, na.rm=TRUE, quantiles = 0.5) # 2
+svyquantile(x = ~UF11, design = mics_design_b1, na.rm=TRUE, quantiles = 0.5) # 2
 
 
 
 svyby(formula = ~UF11, 
       by = ~HH7,
-      design = mics_design,
+      design = mics_design_b1,
       FUN = svymean, na.rm = TRUE,
       keep.names = FALSE) -> tab
 ggplot(data = tab, mapping = aes(x = HH7, y = UF11)) +  
@@ -1146,141 +1147,9 @@ ggplot(data = tab, mapping = aes(x = HH7, y = UF11, ymin = lower, ymax = upper))
 
 
 # Inference
-svyttest(formula = UF11 ~ hh6a, design = mics_design) # p-value = 0.4025
+svyttest(formula = UF11 ~ hh6a, design = mics_design_b1) # p-value = 0.4025
 
 
 ```
-
-
-
-
-```{r immunization documents}
-
-# These questions were only asked to children <3
-
-# Immunization documents
-
-mics3.ch %>% filter(UF11 < 3) %>% count(IM2, IM5, IM11) 
-
-# New variables
-
-mics3.ch %>% count(IM5_2) # indicates source of information
-mics3.ch %>% count(recall) # recall or not
-# but is not perfectly clear; there is also "mothers report" option on vaccination card questions
-
-```
-
-
-
-
-```{r hep B birth dose}
-
-# Subset kids
-mics3.ch %>% filter(UF11 < 3) -> mics3.ch_2
-
-# Survey design again, based on option 2
-
-mics_design_2 <- svydesign(data = mics3.ch_2, 
-                           weights = ~chweight, 
-                           id = ~strata+HH1)
-mics_design_2
-
-
-# Age should not give too many surprises?
-svytable(~hbv_bd_3 + HH6, design = mics_design_2) -> tab
-tab <- as.data.frame(tab)
-
-ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = HH6)) +
-  geom_col(position = "fill") +
-  coord_flip()
-
-
-
-# Urban Rural
-svytable(~hbv_bd_3 + hh6a, design = mics_design_2) -> tab
-tab <- as.data.frame(tab)
-
-ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = hh6a)) +
-  geom_col(position = "fill") +
-  coord_flip()
-
-
-
-# melevel
-svytable(~hbv_bd_3 + melevel, design = mics_design_2) -> tab
-tab <- as.data.frame(tab)
-
-ggplot(data = tab, mapping = aes(x=hbv_bd_3, y=Freq, fill = melevel)) +
-  geom_col(position = "fill") +
-  coord_flip()
-
-tab
-
-```
-
-
-
-```{r immunization day}
-
-# immunisation day
-
-mics3.ch %>% count(IM8A) # which is this?
-
-# A NATIONAL POLIO CAMPAIGN
-# B NATIONAL MEASLES CAMPAIGN
-# C NATIONAL IMMUNIZATION DAY
-# D PROVINCIAL HEALTH DAY
-
-```
-
-
-
-
-## Data: mics.hh
-
-
-```{r check sampling}
-
-mics3.hh %>% tabyl(HH7, HH6) # Provinces explicit strata; area implicit strata
-
-# https://www.restore.ac.uk/PEAS/sratheory.php
-
-#  ‘Explicit stratification’ is where the population of sampling units is explicitly divided into strata and a separate sample selected per stratum. ‘Implicit stratum’ is where the population of sampling units is sorted by some characteristic(s) and then the sample is selected from the sorted list using a fixed sampling interval and a random start. 
-
-```
-
-
-
-
-
-
-```{r notes}
-
-# If error code
-
-# https://r-survey.r-forge.r-project.org/survey/exmample-lonely.html
-# https://stackoverflow.com/questions/55975478/problems-due-to-having-too-many-single-psus-at-stage-one
-
-# Some PSU only have one: If only one PSU is sampled from a particular stratum the variance can't be computed (there is no unbiased estimator and the standard estimator gives 0/0).
-
-
-# Work around
-
-#options(survey.adjust.domain.lonely=TRUE)
-#options(survey.lonely.psu="adjust")
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
 
 

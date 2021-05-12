@@ -74,6 +74,7 @@ mics4.ch <- read_sav("./data/mics4/ch.sav")
 
 mics4.wm <- read_sav("./data/mics4/wm.sav")
 
+
 # look at lables 
 sjPlot::view_df(mics4.ch)
 
@@ -96,6 +97,16 @@ mics4.wm_var$UF4
 # Merge joining variables from dataset woman to dataset children_2017 using as key variable: UF4 (mothers or caretakers line number in ch.sav).
 # Common variables used to merge are: HH1, HH2, UF4 in children, LN in women
 mics4.ch_wm <- merge(mics4.ch, mics4.wm_var, by=c("HH1", "HH2", "UF4"), all.x = TRUE)
+
+# Look if merging succeeded
+# look at lables 
+sjPlot::view_df(mics4.ch_wm)
+sjPlot::view_df(mics4.wm_var)
+
+mics4.wm_var%>% count(MN18)
+mics4.ch_wm %>% count(MN18)
+
+
 
 mics4.ch %>% count(CAGE, AG2)
 
@@ -766,6 +777,30 @@ mics4.ch_p1 %>% count(penta3_C_1) # 0: 341  1: 1466
 
 ```
 
+### antanatal care
+
+```{r}
+
+# new variable place of delivery
+mics4.ch_b1 %>% 
+  mutate(MN18_1 = recode(MN18,
+                        "11" = "1",
+                        "12" = "1",
+                        "21" = "2",
+                        "22" = "2",
+                        "26" = "2",
+                        "31" = "3",
+                        "32" = "3",
+                        "33" = "3",
+                        "36" = "3",
+                        "96" = "9",
+                        "98" = "9",
+                        "99" = "9")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN18, MN18_1)
+mics4.wm_var %>% count(MN18)
+
+```
+
 ## Survey design
 
 ### strata
@@ -942,6 +977,66 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = AG2)) +
 
 # Vaccination documents
 
+
+```
+### antenatal care variables
+
+```{r}
+# place of delivery: MN18
+mics4.ch_b1 %>% count(MN18_1)
+tab_MN18 <- svytable(~MN18_1, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN18 
+
+# received antenatal care: MN1
+tab_MN1 <- svytable(~MN1, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN1 
+
+# times received antenatal care: MN3
+tab_MN3 <- svytable(~MN3, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN3 
+
+# antenatal care provider MN2
+mics4.ch_b1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2X)
+
+tab_MN2A <- svytable(~MN2A, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2A 
+tab_MN2B <- svytable(~MN2B, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2B
+tab_MN2C <- svytable(~MN2C, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2C
+tab_MN2F <- svytable(~MN2F, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2F
+tab_MN2G <- svytable(~MN2G, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2G
+tab_MN2X <- svytable(~MN2X, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2X
 
 ```
 
