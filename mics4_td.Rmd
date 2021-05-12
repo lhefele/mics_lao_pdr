@@ -87,8 +87,8 @@ sjPlot::view_df(mics4.ch)
 mics4.wm_var <- subset(mics4.wm, select = c("HH1", "HH2", "LN", "MN1", "MN2A", "MN2B", "MN2C", "MN2F", "MN2G", "MN2X", "MN3", "MN18"))
 
 # change variable name in women dataset in order to match with children's
-mics4.wm_var$UF4 <- mics4.wm_var$LN
-mics4.wm_var$UF4
+mics4.wm_var$UF6 <- mics4.wm_var$LN
+mics4.wm_var$UF6
 
 # 11258 281
 # 23937 12 
@@ -96,7 +96,7 @@ mics4.wm_var$UF4
 
 # Merge joining variables from dataset woman to dataset children_2017 using as key variable: UF4 (mothers or caretakers line number in ch.sav).
 # Common variables used to merge are: HH1, HH2, UF4 in children, LN in women
-mics4.ch_wm <- merge(mics4.ch, mics4.wm_var, by=c("HH1", "HH2", "UF4"), all.x = TRUE)
+mics4.ch_wm <- merge(mics4.ch, mics4.wm_var, by=c("HH1", "HH2", "UF6"), all.x = TRUE)
 
 # Look if merging succeeded
 # look at lables 
@@ -796,10 +796,58 @@ mics4.ch_b1 %>%
                         "96" = "9",
                         "98" = "9",
                         "99" = "9")) -> mics4.ch_b1
-mics4.ch_b1 %>% count(MN18, MN18_1)
-mics4.wm_var %>% count(MN18)
+mics4.ch_b1 %>% count(MN18)
+mics4.wm %>% count(MN18)
+
+mics4.ch_b1 %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
+                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
+                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN3, MN3_1)
+mics4.ch_b1 %>% count(MN3)
+mics4.ch_wm %>% count(MN3)
+mics4.wm %>% count(MN3)
+
+# changing variable MN2 into categories
 
 ```
+
+### Factors
+```{r}
+# changing variables into factors
+
+# data b1
+mics4.ch_b1$HH7R <- as.factor(mics4.ch_b1$HH7R)
+mics4.ch_b1$HH6 <- as.factor(mics4.ch_b1$HH6)
+mics4.ch_b1$windex5 <- as.factor(mics4.ch_b1$windex5)
+mics4.ch_b1$HL4 <- as.factor(mics4.ch_b1$HL4)
+mics4.ch_b1$ethnicity <- as.factor(mics4.ch_b1$ethnicity)
+mics4.ch_b1$melevel <- as.factor(mics4.ch_b1$melevel)
+mics4.ch_b1$MN18_1 <- as.factor(mics4.ch_b1$MN18_1)
+mics4.ch_b1$MN1 <- as.factor(mics4.ch_b1$MN1)
+mics4.ch_b1$MN2A <- as.factor(mics4.ch_b1$MN2A)
+mics4.ch_b1$MN3_1 <- as.factor(mics4.ch_b1$MN3_1)
+
+mics4.ch_b1$hepb0_RC_2 <- as.factor(mics4.ch_b1$hepb0_RC_2)
+mics4.ch_b1$hepb0_RC_24 <- as.factor(mics4.ch_b1$hepb0_RC_24)
+
+# HH7R, HH6, windex5, HL4, ethnicity, melevel, MN18_1, MN1, MN2, MN3_1
+# Using design b1: first combination card and recall variable: hepb0_RC_2, hepb0_RC_24
+
+# data p1
+mics4.ch_p1$HH7R <- as.factor(mics4.ch_p1$HH7R)
+mics4.ch_p1$HH6 <- as.factor(mics4.ch_p1$HH6)
+mics4.ch_p1$windex5 <- as.factor(mics4.ch_p1$windex5)
+mics4.ch_p1$HL4 <- as.factor(mics4.ch_p1$HL4)
+mics4.ch_p1$ethnicity <- as.factor(mics4.ch_p1$ethnicity)
+mics4.ch_p1$melevel <- as.factor(mics4.ch_p1$melevel)
+
+mics4.ch_p1$penta1_RC_1 <- as.factor(mics4.ch_p1$penta1_RC_1)
+mics4.ch_p1$penta2_RC_1 <- as.factor(mics4.ch_p1$penta2_RC_1)
+mics4.ch_p1$penta3_RC_1 <- as.factor(mics4.ch_p1$penta3_RC_1)
+
+# Using design p1: penta1_RC_1, penta2_RC_1, penta3_RC_1.
+```
+
 
 ## Survey design
 
@@ -998,7 +1046,7 @@ tab_MN1 <- svytable(~MN1, design = mics_design_b1) %>%
 tab_MN1 
 
 # times received antenatal care: MN3
-tab_MN3 <- svytable(~MN3, design = mics_design_b1) %>% 
+tab_MN3 <- svytable(~MN3_1, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
@@ -1133,6 +1181,78 @@ tab_penta3_C_1 <- svytable(~penta3_C_1, design = mics_design_p1) %>%
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab_penta3_C_1 
+
+
+```
+
+## Inference
+
+```{r inference}
+
+# Looking at association between independent and dependent variables:
+# HH7R, HH6, windex5, HL4, ethnicity, melevel, MN18_1, MN1, MN2, MN3_1
+# Using design b1: first combination card and recall variable: hepb0_RC_2, hepb0_RC_24
+# Using design p1: penta1_RC_1, penta2_RC_1, penta3_RC_1.
+
+
+# before change into factors because categorical variables
+
+
+# survey design 
+
+svytable(~hepb0_RC_2 + HH6, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") 
+
+
+# H0: hepb0 coverage not associated with area
+# H1: hepb0 coverage associated with area
+svychisq(~hepb0_RC_2 + HH6, design = mics_design_b1, statistic = "Chisq") 
+
+# does work: Pearson's X^2: Rao & Scott adjustment
+# data:  svychisq(~hepb0_RC_2 + HH6, design = mics_design_b1, statistic = "Chisq")
+# X-squared = 347.37, df = 2, p-value = 0.000052
+
+
+
+
+# Getting summary statistics while accounting for survey design
+
+# what would be a numeric variable??
+# UF11
+svymean(~UF11, design = mics_design_b1, na.rm=TRUE)
+#       mean     SE
+# UF11 2.0415 0.016
+
+svyquantile(x = ~UF11, design = mics_design_b1, na.rm=TRUE, quantiles = 0.5) # 2
+
+
+
+svyby(formula = ~UF11, 
+      by = ~HH7,
+      design = mics_design_b1,
+      FUN = svymean, na.rm = TRUE,
+      keep.names = FALSE) -> tab
+ggplot(data = tab, mapping = aes(x = HH7, y = UF11)) +  
+  geom_col() + 
+  labs(y = "mean age", x = "Province") # looks terrible
+
+
+# with error bars
+
+tab <- mutate(tab, lower = UF11 - se, upper = UF11 + se)
+tab
+
+ggplot(data = tab, mapping = aes(x = HH7, y = UF11, ymin = lower, ymax = upper)) +  
+  geom_col() + 
+  geom_errorbar(width = 2) +
+  labs(y = "mean age", x = "Province") # looks terrible # Error bars
+
+
+# Inference
+svyttest(formula = UF11 ~ HH6, design = mics_design_b1) # p-value = 0.4025
 
 
 ```

@@ -110,7 +110,7 @@ mics6.ch %>% count(UF4) # range from 1-20
 
 ```{r merging}
 # selecting subset of variables of women's dataset
-mics6.wm_var <- subset(mics6.wm, select = c("HH1", "HH2", "LN", "MN2", "MN3A", "MN3B", "MN3C", "MN3F", "MN3G", "MN3X", "MN5", "MN20"))
+mics6.wm_var <- subset(mics6.wm, select = c("HH1", "HH2", "LN", "MN2", "MN3A", "MN3B", "MN3C", "MN3F", "MN3G", "MN3X", "MN3NR", "MN5", "MN20"))
 
 # change variable name in women dataset in order to match with children's
 mics6.wm_var$UF4 <- mics6.wm_var$LN
@@ -944,6 +944,28 @@ mics6.ch_b1 %>%
 mics6.ch_b1 %>% count(MN20, MN20_1)
 mics6.wm_var %>% count(MN20)
 
+# new variable times received antenatal care: 1-3, 4-6, 7 or more
+mics6.ch_b1 %>% 
+  mutate(MN20_1 = recode(MN20,
+                        "1" = "1",
+                        "1" = "1",
+                        "3" = "2",
+                        "4" = "2",
+                        "5" = "2",
+                        "6" = "3",
+                        "7" = "3",
+                        "8" = "3",
+                        "9" = "3",
+                        "10" = "9",
+                        "11" = "9",
+                        "99" = "9")) -> mics6.ch_b1
+mics6.ch_b1 %>% count(MN20, MN20_1)
+
+mics6.ch_b1 %>% mutate(MN5_1 = if_else(MN5 >= 1 & MN5 <=3, 1,
+                                        if_else(MN5 >= 4 & MN5 <= 6, 2,
+                                        if_else(MN5 == 98, 9, 3)))) -> mics6.ch_b1
+mics6.ch_b1 %>% count(MN5, MN5_1)
+
 ```
 
 
@@ -1293,53 +1315,58 @@ tab_MN20 <- svytable(~MN20_1, design = mics_design) %>%
   mutate(Total = sum(Freq)) 
 tab_MN20 
 
-# received antenatal care: MN1
-tab_MN1 <- svytable(~MN1, design = mics_design) %>% 
+# received antenatal care: MN2
+tab_MN2 <- svytable(~MN2, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN1 
+tab_MN2
 
-# times received antenatal care: MN3
-tab_MN3 <- svytable(~MN3, design = mics_design) %>% 
+# times received antenatal care: MN5
+tab_MN5 <- svytable(~MN5_1, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3 
+tab_MN5 
 
-# antenatal care provider MN2
-mics6.ch_b1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2X)
+# antenatal care provider MN3
+mics6.ch_b1 %>% count(MN3A, MN3B, MN3C,MN3F, MN3G, MN3X)
 
-tab_MN2A <- svytable(~MN2A, design = mics_design) %>% 
+tab_MN3A <- svytable(~MN3A, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2A 
-tab_MN2B <- svytable(~MN2B, design = mics_design) %>% 
+tab_MN3A 
+tab_MN3B <- svytable(~MN3B, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2B
-tab_MN2C <- svytable(~MN2C, design = mics_design) %>% 
+tab_MN3B
+tab_MN3C <- svytable(~MN3C, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2C
-tab_MN2F <- svytable(~MN2F, design = mics_design) %>% 
+tab_MN3C
+tab_MN3F <- svytable(~MN3F, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2F
-tab_MN2G <- svytable(~MN2G, design = mics_design) %>% 
+tab_MN3F
+tab_MN3G <- svytable(~MN3G, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2G
-tab_MN2X <- svytable(~MN2X, design = mics_design) %>% 
+tab_MN3G
+tab_MN3X <- svytable(~MN3X, design = mics_design) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2X
+tab_MN3X
+tab_MN3NR <- svytable(~MN3NR, design = mics_design) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN3NR
 
 ```
 

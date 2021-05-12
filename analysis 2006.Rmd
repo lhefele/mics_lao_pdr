@@ -1081,6 +1081,7 @@ tab_DPT3_C_1 <- svytable(~DPT3_C_1, design = mics_design_p1) %>%
 tab_DPT3_C_1 
 
 ```
+
 ## Inference
 
 ```{r inference}
