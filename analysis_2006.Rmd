@@ -98,11 +98,10 @@ glimpse(mics3.ch)
 
 # look at lables 
 sjPlot::view_df(mics3.ch)
-mics3.ch %>% labelled::look_for("UF4")
 sjPlot::view_df(mics3.wm)
 
 # Mother / caretaker
-mics3.ch %>% count(UF4) # range from 1-20
+mics3.ch %>% count(UF6) # range from 1-16
 # need to make a individual number for the merging
 
 ```
@@ -113,10 +112,14 @@ mics3.ch %>% count(UF4) # range from 1-20
 # selecting subset of variables of women's dataset
 mics3.wm_var <- subset(mics3.wm, select = c("HH1", "HH2", "LN", "MN2A", "MN2B", "MN2C", "MN2F", "MN2G", "MN2H", "MN2X", "MN2Y","MN8"))
 
+# HH1-2, LN for identifying women
+# MN2 - ANC
+# MN8 - POB
+
 # change variable name in women dataset in order to match with children's
-# use of LN or WM4? woman's line number instead of line number
+# woman's line number instead of line number
 mics3.wm_var$UF6 <- mics3.wm_var$LN
-mics3.wm_var$UF6
+#mics3.wm_var$UF6
 mics3.wm %>% count(LN, WM4) # probably the same variable
 
 
@@ -128,6 +131,8 @@ mics3.ch_wm <- merge(mics3.ch, mics3.wm_var, by=c("HH1", "HH2", "UF6"), all.x = 
 mics3.ch_wm %>% filter(UF11 < 3) -> mics3.ch_b1 # 6
 
 ```
+
+
 
 ## New variables in mics3.ch
 
