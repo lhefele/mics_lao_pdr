@@ -179,6 +179,16 @@ class(mics4.ch_wm$AG1M_2)
 ```
 
 
+```{r strata}
+
+mics4.ch_wm %>% 
+  unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_wm
+mics4.ch_wm %>% count(strata)
+
+# 49 strata??
+
+```
+
 
 
 ### Subset
@@ -186,21 +196,18 @@ class(mics4.ch_wm$AG1M_2)
 ```{r mics4.ch_b1}
 
 #subset children under 3
-mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1 # 6591 when using CAGE, # 6573 using AG2, difference is because there are 19 children who are 3 years and 35 months, and 1 child 36 month and 2 years old. 
+mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1 
+# 6591 when using CAGE, 
+# 6573 using AG2, difference is because there are 19 children who are 3 years and 35 months, and 1 child 36 month and 2 years old. 
 
 
 ```
 
 
-
-
-
-
-
-
 ```{r mics4.ch_p1}
 
 mics4.ch_b1 %>% filter(CAGED > 365) -> mics4.ch_p1
+
 
 ```
 
@@ -458,10 +465,11 @@ mics4.ch_b1 %>% count(hepb0_R_24) # 0: 3348 1: 375
 
 
 ```{r anc}
+class(mics4.ch_b1$MN18)
+mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
 
 # new variable place of delivery
-mics4.ch_b1 %>% 
-  mutate(MN18_1 = recode(MN18,
+mics4.ch_b1 %>% mutate(MN18_1 = dplyr::recode(MN18,
                         "11" = "1",
                         "12" = "1",
                         "21" = "2",
