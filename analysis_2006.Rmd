@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # Lao PDR: MICS Data - mics3
 
 
-
+I changed the structure of the file and delete some bits. If you want to see the earlier version, you can go to the git hub site and look at the previous version.
 
 
 
@@ -54,6 +54,8 @@ library(lubridate) # working with dates
 
 library(survey)
 
+library(srvyr)
+
 #library(sjmisc)
 
 #library(knitr)
@@ -74,22 +76,22 @@ library(naniar)
 ## Data
 
 
-```{r dataset mics3}
+```{r dataset mics3 ch}
 
-# package haven
 mics3.ch <- read_sav("./data/mics3/ch.sav")
+
+
+```
+
+
+```{r dataset mics3 wm}
 
 mics3.wm <- read_sav("./data/mics3/wm.sav")
 
 ```
 
 
-
-
-## Data: mics3.ch - children under five
-
-
-```{r mics3.ch glimpse}
+```{r glimpse}
 
 # Mothers or primary caretakers of children under five – ch.sav
 dim(mics3.ch)
@@ -106,7 +108,10 @@ mics3.ch %>% count(UF6) # range from 1-16
 
 ```
 
-### merging women to children and subset children under 3
+
+
+### Merging women data to children 
+
 
 ```{r merging}
 # selecting subset of variables of women's dataset
@@ -119,7 +124,6 @@ mics3.wm_var <- subset(mics3.wm, select = c("HH1", "HH2", "LN", "MN2A", "MN2B", 
 # change variable name in women dataset in order to match with children's
 # woman's line number instead of line number
 mics3.wm_var$UF6 <- mics3.wm_var$LN
-#mics3.wm_var$UF6
 mics3.wm %>% count(LN, WM4) # probably the same variable
 
 
@@ -127,41 +131,43 @@ mics3.wm %>% count(LN, WM4) # probably the same variable
 # Common variables used to merge are: HH1, HH2, UF4 in children, LN in women
 mics3.ch_wm <- merge(mics3.ch, mics3.wm_var, by=c("HH1", "HH2", "UF6"), all.x = TRUE)
 
-#subset children under 3
-mics3.ch_wm %>% filter(UF11 < 3) -> mics3.ch_b1 # 6
-
 ```
 
 
+### New variables 
 
-## New variables in mics3.ch
 
 ```{r household and child id}
 
 # Household ID
-mics3.ch_b1 %>% unite(HH_id, c(HH1, HH2), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_b1
+mics3.ch_wm %>% unite(HH_id, c(HH1, HH2), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_wm
 
 # Are there any duplicates?
-mics3.ch_b1 %>% group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n())
-# 336 duplicates meaning more children in one household
+mics3.ch_wm %>% group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n())
+# 1046 duplicates meaning more children in one household
 
 # Unique id for each child
 # UF4 should be the individual number of each child (LN of child)
 
-mics3.ch_b1 %>% unite(ch_id, c(HH1, HH2, UF4), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_b1
-mics3.ch_b1 %>% group_by(ch_id) %>% filter(n()>1) %>% summarize(n=n())
+mics3.ch_wm %>% 
+  unite(ch_id, 
+        c(HH1, HH2, UF4), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_wm
+mics3.ch_wm %>% group_by(ch_id) %>% filter(n()>1) %>% summarize(n=n())
 # none 
 
 ```
 
-### strata
 
 ```{r strata}
 
 # strata
 # Do I need a new variable combining HH6 and HH7?
-mics3.ch_b1 %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_b1
-mics3.ch_b1 %>% count(strata)
+
+# The sample for the Lao PDR Multiple Indicator Cluster Survey (MICS) was designed to provide estimates on a large number of indicators conerning the situation of children and women at the national level, for urban and rural areas, and for three regions: North, Central and South.
+
+mics3.ch_wm %>% 
+  unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_wm
+mics3.ch_wm %>% count(strata)
 
 ```
 
@@ -171,12 +177,12 @@ mics3.ch_b1 %>% count(strata)
 
 # Day of the interview
 
-mics3.ch_b1$UF8D_2 <- as.numeric(as.character(mics3.ch_b1$UF8D))
-mics3.ch_b1$UF8Y_2 <- as.numeric(as.character(mics3.ch_b1$UF8Y))
-mics3.ch_b1$UF8M_2 <- as.numeric(as.character(mics3.ch_b1$UF8M))
+mics3.ch_wm$UF8D_2 <- as.numeric(as.character(mics3.ch_wm$UF8D))
+mics3.ch_wm$UF8Y_2 <- as.numeric(as.character(mics3.ch_wm$UF8Y))
+mics3.ch_wm$UF8M_2 <- as.numeric(as.character(mics3.ch_wm$UF8M))
 
 # day of interview
-mics3.ch_b1 %>%  mutate(I_date = make_date(UF8Y_2, UF8M_2, UF8D_2)) -> mics3.ch_b1
+mics3.ch_wm %>%  mutate(I_date = make_date(UF8Y_2, UF8M_2, UF8D_2)) -> mics3.ch_wm
 # A function from lubridate package
 
 ```
@@ -186,29 +192,51 @@ mics3.ch_b1 %>%  mutate(I_date = make_date(UF8Y_2, UF8M_2, UF8D_2)) -> mics3.ch_
 ```{r date of birth}
 
 # Date of birth 
-mics3.ch_b1 %>% count(UF10D)
-mics3.ch_b1 %>% count(UF10M)
+mics3.ch_wm %>% count(UF10D)
+mics3.ch_wm %>% count(UF10M)
 
-class(mics3.ch_b1$UF10M)
+class(mics3.ch_wm$UF10M)
 
-mics3.ch_b1$UF10D_2 <- as.numeric(mics3.ch_b1$UF10D)
+mics3.ch_wm$UF10D_2 <- as.numeric(mics3.ch_wm$UF10D)
 
-mics3.ch_b1$UF10M_2 <- as.numeric(mics3.ch_b1$UF10M)
+mics3.ch_wm$UF10M_2 <- as.numeric(mics3.ch_wm$UF10M)
 
-mics3.ch_b1$UF10Y_2 <- as.numeric(mics3.ch_b1$UF10Y)
+mics3.ch_wm$UF10Y_2 <- as.numeric(mics3.ch_wm$UF10Y)
 
-mics3.ch_b1 %>%  mutate(dob_ch = make_date(UF10Y_2, UF10M_2, UF10D_2)) -> mics3.ch_b1
-mics3.ch_b1$dob_ch
-class(mics3.ch_b1$UF10M_2)
+mics3.ch_wm %>%  mutate(dob_ch = make_date(UF10Y_2, UF10M_2, UF10D_2)) -> mics3.ch_wm
 
 ```
 
 
-### tetravalent 1
+
+### Subset
+
+
+
+The data will be subset into children from 1 to 2 years of age for the ananlysis of the hepatitis B vaccinations.
+
+
+```{r mics3.ch_p1}
+
+mics3.ch_wm %>% filter(UF11 >= 1) -> mics3.ch_p1
+
+
+```
+
+
+
+## mics3.ch_p1
+
+
+### Variables
+
+
+#### tetravalent vaccine
+
 
 ```{r tetravalent 1}
 
-mics3.ch_b1 %>% filter(UF11 >= 1) -> mics3.ch_p1
+
 
 # tetra 1 Only Card
 
@@ -240,7 +268,7 @@ mics3.ch_p1 %>% count(tetra1_C_1) # 0: 394 1: 324
 
 ```
 
-### tetravalent 2
+
 
 ```{r tetravalent 2}
 
@@ -276,7 +304,6 @@ mics3.ch_p1 %>% count(tetra2_C_1) # 0: 419 1: 298
 ```
 
 
-### tetravalent 3
 
 ```{r tetravalent 3}
 
@@ -310,9 +337,13 @@ mics3.ch_p1 %>% count(tetra3_C_1) # 0: 474 1: 238
 
 ```
 
-### DPT 1
 
-```{r}
+
+
+#### DPT vaccine
+
+
+```{r DTP 1}
 
 # DPT 1 Only Card
 
@@ -421,9 +452,9 @@ mics3.ch_p1 %>% count(DPT1_C, tetra1_C)
 
 ```
 
-### DPT 2
 
-```{r}
+
+```{r DTP 2}
 
 # DPT 2 Only Card
 
@@ -578,9 +609,11 @@ mics3.ch_p1 %>% count(DPT2_C_1) # 0: 74 1: 637
 
 ```
 
-### DPT 3
 
-```{r}
+
+
+
+```{r DTP 3}
 
 # DPT 2 Only Card
 
@@ -735,9 +768,11 @@ mics3.ch_p1 %>% count(DPT3_C_1) # 0: 169 1: 521
 
 ```
 
-### antanatal care
 
-```{r}
+
+#### Antenatal care
+
+```{r anc}
 mics3.ch_p1 %>% count(IM5AD, IM4AD, tetra1_C, DPT1_C)
 
 # new variable place of delivery
@@ -759,66 +794,25 @@ mics3.ch_p1 %>% count(MN8, MN8_1)
 
 ```
 
-### Data exploration 
 
 
-```{r data explorer}
 
-# Data explorer
+### Survey design
 
-# introduce(mics3.ch)
-
-# plot_bar(mics3.ch)
-
-```
-
-## Survey design
-
-### strata
-
-```{r strata}
-
-# strata
-# New variable combining HH6 and HH7
-mics3.ch_b1 %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_b1
-mics3.ch_b1 %>% count(strata)
-
-# New variable combining HH6 and HH7
-mics3.ch_p1 %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_p1
-mics3.ch_p1 %>% count(strata)
-
-# New variable combining HH6 and HH7
-mics3.ch %>% unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch
-mics3.ch %>% count(strata)
-
-```
-
-### design
 
 ```{r survey design}
 
+# The sample for the Lao PDR Multiple Indicator Cluster Survey (MICS) was designed to provide estimates on a large number of indicators conerning the situation of children and women at the national level, for urban and rural areas, and for three regions: North, Central and South. Regions were identified as the main sampling domains and the sample was selected in two stages. Within each region, 100 census enumeration areas were selected with probability proportional to size. After a household listing was carried out within the selected enumeration areas, a systematic sample of 20 households was drawn. Although the sample was designed to collect information from 6,000 households, it was known in advance that one village only had 15 households, therefore the total expected number of households was 5,995. Of the selected enumeration areas, all but two were visited during the fieldwork period. The two missing enumeration areas were replaced in the field with villages of similar area type. The sample was stratified by region and is not self-weighting. For reporting national level results, sample weights are used. A more detailed description of the sample design can be found in Appendix A.
+
+
+
 # Understanding the sample design
-mics3.ch %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
-mics3.ch %>% count(HH6)
-mics3.ch %>% tabyl(HH7, HH6)
+mics3.ch_wm %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
+mics3.ch_wm %>% count(HH6) # Area
+mics3.ch_wm %>% tabyl(HH7, HH6)
 
-mics3.ch %>% count(strata) # 49 rows
+mics3.ch_wm %>% count(strata) # 9 rows
 
-# How many clusters:
-
-# Provinces are strata
-mics3.ch %>% summarize(n_clusters = n_distinct(HH7, HH1))
-# 998
-
-mics3.ch %>% summarize(n_clusters = n_distinct(strata, HH1))
-# 998 # same
-
-
-# Make design for hepb0 with selected children aged under 3: n = 2494
-
-mics_design_b1 <- svydesign(data = mics3.ch_b1, 
-                         weights = ~chweight, 
-                         id = ~strata+HH1)
 
 
 # Make design for pentavalent with selected children aged under 3 and older than 1 year: n = 1656
@@ -831,9 +825,12 @@ mics_design_p1 <- svydesign(data = mics3.ch_p1,
 
 ```
 
-## Descriptives weighted
 
-### independent variables
+
+### Descriptive analysis - weighted
+
+
+#### Independent variables
 
 ```{r descriptive}
 
@@ -855,6 +852,14 @@ tab_ethnicity <- svytable(~HC1C, design = mics_design_p1) %>%
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab_ethnicity
+
+# For comparison:
+
+mics3.ch_p1 %>% 
+  as_survey(weights = c(chweight)) %>% 
+  group_by(HC1C) %>% 
+  summarize(n = survey_total()) # same result
+
 
 tab_melevel <- svytable(~melevel, design = mics_design_p1) %>% 
   as.data.frame() %>% 
@@ -923,8 +928,6 @@ ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = wlthind5)) +
   geom_col(position = "fill") +
   coord_flip()
 
-# Pretty much all looks like you would expect
-
 
 
 # Age should not give too many surprises?
@@ -947,13 +950,12 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = UF11)) +
   coord_flip()
 
 
-# Vaccination documents
-
-
 ```
-### antenatal care variables
 
-```{r}
+
+
+```{r anc}
+
 # place of delivery: MN8
 mics3.ch_p1 %>% count(MN8_1)
 tab_MN8 <- svytable(~MN8_1, design = mics_design_p1) %>% 
@@ -961,6 +963,7 @@ tab_MN8 <- svytable(~MN8_1, design = mics_design_p1) %>%
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab_MN8 
+
 
 # antenatal care provider
 mics3.ch_p1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2H, MN2X, MN2Y)
@@ -1005,12 +1008,11 @@ tab_MN2Y <- svytable(~MN2Y, design = mics_design_p1) %>%
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab_MN2Y
+
 ```
 
 
-### dependent variables
-
-```{r descriptives dependent variables}
+```{r descriptive - dependent variables}
 
 tab_tetra1_C_1 <- svytable(~tetra1_C_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
@@ -1087,7 +1089,10 @@ tab_DPT3_C_1
 
 ```
 
-## Inference
+
+
+#### Bivariate analysis
+
 
 ```{r inference}
 
@@ -1096,7 +1101,7 @@ tab_DPT3_C_1
 
 # survey design 
 
-svytable(~HC1C + HH6, design = mics_design_b1) -> tab
+svytable(~HC1C + HH6, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
 ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = HH6)) +
@@ -1107,13 +1112,10 @@ ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = HH6)) +
 # H0: Area not associated with race
 # H1: Area associated with race
 # svychisq(~HC1C + HH6, design = mics_design, statistic = "Chisq") 
-# does not work??
 
 
-
-
-svychisq(~HC1C + HH6, design = mics_design_b1, statistic = "Chisq") 
-# X-squared = 1097.5, df = 8, p-value = 0.0003611
+svychisq(~HC1C + HH6, design = mics_design_p1, statistic = "Chisq") 
+# X-squared = 363.71, df = 8, p-value = 0.7144
 
 
 
@@ -1123,37 +1125,12 @@ svychisq(~HC1C + HH6, design = mics_design_b1, statistic = "Chisq")
 
 # what would be a numeric variable??
 # UF11
-svymean(~UF11, design = mics_design_b1, na.rm=TRUE)
+svymean(~UF11, design = mics_design_p1, na.rm=TRUE)
 #       mean     SE
 # UF11 2.0415 0.016
 
-svyquantile(x = ~UF11, design = mics_design_b1, na.rm=TRUE, quantiles = 0.5) # 2
+svyquantile(x = ~UF11, design = mics_design_p1, na.rm=TRUE, quantiles = 0.5) # 2
 
-
-
-svyby(formula = ~UF11, 
-      by = ~HH7,
-      design = mics_design_b1,
-      FUN = svymean, na.rm = TRUE,
-      keep.names = FALSE) -> tab
-ggplot(data = tab, mapping = aes(x = HH7, y = UF11)) +  
-  geom_col() + 
-  labs(y = "mean age", x = "Province") # looks terrible
-
-
-# with error bars
-
-tab <- mutate(tab, lower = UF11 - se, upper = UF11 + se)
-tab
-
-ggplot(data = tab, mapping = aes(x = HH7, y = UF11, ymin = lower, ymax = upper)) +  
-  geom_col() + 
-  geom_errorbar(width = 2) +
-  labs(y = "mean age", x = "Province") # looks terrible # Error bars
-
-
-# Inference
-svyttest(formula = UF11 ~ hh6a, design = mics_design_b1) # p-value = 0.4025
 
 
 ```
