@@ -1195,9 +1195,6 @@ tab_penta3_C_1
 # Using design p1: penta1_RC_1, penta2_RC_1, penta3_RC_1.
 
 
-# before change into factors because categorical variables
-
-
 # survey design 
 
 svytable(~hepb0_RC_2 + HH6, design = mics_design_b1) -> tab
@@ -1207,13 +1204,83 @@ ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = HH6)) +
   geom_col(position = "fill") 
 
 
-# H0: hepb0 coverage not associated with area
-# H1: hepb0 coverage associated with area
+# H0: hepb0 coverage not associated with independent variables
+# H1: hepb0 coverage associated with independent variables
 svychisq(~hepb0_RC_2 + HH6, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + HH7R, design = mics_design_b1, statistic = "Chisq") #ns
+svychisq(~hepb0_RC_2 + windex5, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + HL4, design = mics_design_b1, statistic = "Chisq") #ns
+svychisq(~hepb0_RC_2 + ethnicity, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + melevel, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN18_1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN2A, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN3_1, design = mics_design_b1, statistic = "Chisq")
+
+# H0: hepb0 coverage within 24 hours not associated with independent variables
+# H1: hepb0 coverage within 24 hours associated with independent variables
+svychisq(~hepb0_RC_24 + HH6, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + HH7R, design = mics_design_b1, statistic = "Chisq") #ns
+svychisq(~hepb0_RC_24 + windex5, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + HL4, design = mics_design_b1, statistic = "Chisq") # ns
+svychisq(~hepb0_RC_24 + ethnicity, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + melevel, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN18_1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN2A, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN3_1, design = mics_design_b1, statistic = "Chisq")
+
+# H0: penta1 coverage not associated with independent variables
+# H1: penta1 coverage associated with independent variables
+svychisq(~penta1_RC_1 + HH6, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + HH7R, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta1_RC_1 + windex5, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + HL4, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta1_RC_1 + ethnicity, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + melevel, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN18_1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN2A, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN3_1, design = mics_design_p1, statistic = "Chisq")
+
+# H0: penta2 coverage not associated with independent variables
+# H1: penta2 coverage associated with independent variables
+svychisq(~penta2_RC_1 + HH6, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + HH7R, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta2_RC_1 + windex5, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + HL4, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta2_RC_1 + ethnicity, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + melevel, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN18_1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN2A, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN3_1, design = mics_design_p1, statistic = "Chisq")
+
+# H0: penta3 coverage not associated with independent variables
+# H1: penta3 coverage associated with independent variables
+svychisq(~penta3_RC_1 + HH6, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + HH7R, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta3_RC_1 + windex5, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + HL4, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta3_RC_1 + ethnicity, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + melevel, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN18_1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN2A, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN3_1, design = mics_design_p1, statistic = "Chisq")
+
 
 # does work: Pearson's X^2: Rao & Scott adjustment
 # data:  svychisq(~hepb0_RC_2 + HH6, design = mics_design_b1, statistic = "Chisq")
 # X-squared = 347.37, df = 2, p-value = 0.000052
+
+# Odds ratios
+# ordered logistic regression does work, but svy ratio function does not work because it needs numeric arguments? strange. 
+svyolr(HH6~ethnicity, design=mics_design_b1)
+
+
+svyratio(~windex5, denominator = ~HH6, design = mics_design_b1)
+
 
 
 
