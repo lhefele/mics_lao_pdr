@@ -187,13 +187,60 @@ mics4.ch_wm %>% count(strata)
 
 # 49 strata??
 
+# Understanding the sample design
+mics4.ch_wm %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
+mics4.ch_wm %>% count(HH6)
+mics4.ch_wm %>% tabyl(HH7, HH6)
+
+mics4.ch_wm %>% count(strata) # 49 rows
+
+# How many clusters:
+
+# Provinces are strata
+mics4.ch_wm %>% summarize(n_clusters = n_distinct(HH7, HH1))
+# 998
+
+mics4.ch_wm %>% summarize(n_clusters = n_distinct(strata, HH1))
+# 998 # same
+
 ```
 
+```{r anc}
+class(mics4.ch_wm$MN18)
+mics4.ch_wm$MN18 <- as.factor(mics4.ch_wm$MN18)
 
+# new variable place of delivery
+mics4.ch_wm %>% mutate(MN18_1 = dplyr::recode(MN18,
+                        "11" = "1",
+                        "12" = "1",
+                        "21" = "2",
+                        "22" = "2",
+                        "26" = "2",
+                        "31" = "3",
+                        "32" = "3",
+                        "33" = "3",
+                        "36" = "3",
+                        "96" = "9",
+                        "98" = "9",
+                        "99" = "9")) -> mics4.ch_wm
+mics4.ch_wm %>% count(MN18)
+mics4.wm %>% count(MN18)
+
+mics4.ch_wm %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
+                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
+                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_wm
+mics4.ch_wm %>% count(MN3, MN3_1)
+mics4.ch_wm %>% count(MN3)
+mics4.ch_wm %>% count(MN3)
+mics4.wm %>% count(MN3)
+
+# changing variable MN2 into categories
+
+```
 
 ### Subset
 
-```{r mics4.ch_b1}
+```{r mics4.ch_wm}
 
 #subset children under 3
 mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1 
@@ -464,38 +511,7 @@ mics4.ch_b1 %>% count(hepb0_R_24) # 0: 3348 1: 375
 ```
 
 
-```{r anc}
-class(mics4.ch_b1$MN18)
-mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
 
-# new variable place of delivery
-mics4.ch_b1 %>% mutate(MN18_1 = dplyr::recode(MN18,
-                        "11" = "1",
-                        "12" = "1",
-                        "21" = "2",
-                        "22" = "2",
-                        "26" = "2",
-                        "31" = "3",
-                        "32" = "3",
-                        "33" = "3",
-                        "36" = "3",
-                        "96" = "9",
-                        "98" = "9",
-                        "99" = "9")) -> mics4.ch_b1
-mics4.ch_b1 %>% count(MN18)
-mics4.wm %>% count(MN18)
-
-mics4.ch_b1 %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
-                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
-                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_b1
-mics4.ch_b1 %>% count(MN3, MN3_1)
-mics4.ch_b1 %>% count(MN3)
-mics4.ch_wm %>% count(MN3)
-mics4.wm %>% count(MN3)
-
-# changing variable MN2 into categories
-
-```
 
 
 
@@ -516,12 +532,17 @@ mics4.ch_b1$MN3_1 <- as.factor(mics4.ch_b1$MN3_1)
 
 mics4.ch_b1$hepb0_RC_2 <- as.factor(mics4.ch_b1$hepb0_RC_2)
 mics4.ch_b1$hepb0_RC_24 <- as.factor(mics4.ch_b1$hepb0_RC_24)
+mics4.ch_b1$hepb0_C_2 <- as.factor(mics4.ch_b1$hepb0_C_2)
+mics4.ch_b1$hepb0_C_24 <- as.factor(mics4.ch_b1$hepb0_C_24)
+mics4.ch_b1$hepb0_R_2 <- as.factor(mics4.ch_b1$hepb0_R_2)
+mics4.ch_b1$hepb0_R_24 <- as.factor(mics4.ch_b1$hepb0_R_24)
+
 
 
 ```
 
 
-### Survey design
+### Survey design b1
 
 
 ```{r survey desgin}
@@ -757,79 +778,174 @@ tab <- svytable(~hepb0_R_24, design = mics_design_b1) %>%
   mutate(Total = sum(Freq)) 
 tab 
 
-tab <- svytable(~penta1_RC_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-tab <- svytable(~penta1_R_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-tab <- svytable(~penta1_C_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
-
-tab <- svytable(~penta2_RC_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-tab <- svytable(~penta2_R_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-tab <- svytable(~penta2_C_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-tab <- svytable(~penta3_RC_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-tab <- svytable(~penta3_R_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
-
-tab <- svytable(~penta3_C_1, design = mics_design_p1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab 
-
-
 ```
 
 
 
 ### Bivariate analysis - Inference
 
-```{r inference}
+```{r inference hepb0}
 
 # Looking at association between independent and dependent variables:
 # HH7R, HH6, windex5, HL4, ethnicity, melevel, MN18_1, MN1, MN2, MN3_1
 # Using design b1: first combination card and recall variable: hepb0_RC_2, hepb0_RC_24
-# Using design p1: penta1_RC_1, penta2_RC_1, penta3_RC_1.
 
 
-# before change into factors because categorical variables
+# survey design graphs
+## hepb0_RC_2
+
+svytable(~hepb0_RC_2 + HH6, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + HH7R, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + windex5, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + HL4, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = HL4)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + ethnicity, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = ethnicity)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + melevel, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = melevel)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + MN18_1, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN18_1)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + MN1, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN1)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + MN2A, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN2A)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_2 + MN3_1, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN3_1)) +
+  geom_col(position = "fill") 
 
 
-# survey design 
+## hepb0_RC_24
+
+svytable(~hepb0_RC_24 + HH6, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + HH7R, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + windex5, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + HL4, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = HL4)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + ethnicity, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = ethnicity)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + melevel, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = melevel)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + MN18_1, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN18_1)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + MN1, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN1)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + MN2A, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN2A)) +
+  geom_col(position = "fill") 
+
+svytable(~hepb0_RC_24 + MN3_1, design = mics_design_b1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN3_1)) +
+  geom_col(position = "fill") 
+
+
+
+# H0: hepb0 coverage not associated with independent variables
+# H1: hepb0 coverage associated with independent variables
+svychisq(~hepb0_RC_2 + HH6, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + HH7R, design = mics_design_b1, statistic = "Chisq") #ns
+svychisq(~hepb0_RC_2 + windex5, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + HL4, design = mics_design_b1, statistic = "Chisq") #ns
+svychisq(~hepb0_RC_2 + ethnicity, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + melevel, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN18_1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN2A, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + MN3_1, design = mics_design_b1, statistic = "Chisq")
+
+# H0: hepb0 coverage within 24 hours not associated with independent variables
+# H1: hepb0 coverage within 24 hours associated with independent variables
+svychisq(~hepb0_RC_24 + HH6, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + HH7R, design = mics_design_b1, statistic = "Chisq") #ns
+svychisq(~hepb0_RC_24 + windex5, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + HL4, design = mics_design_b1, statistic = "Chisq") # ns
+svychisq(~hepb0_RC_24 + ethnicity, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + melevel, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN18_1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN1, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN2A, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + MN3_1, design = mics_design_b1, statistic = "Chisq")
+
+
 
 svytable(~hepb0_RC_2 + HH6, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
@@ -1259,25 +1375,40 @@ mics4.ch_p1 %>% count(penta3_C_1) # 0: 341  1: 1466
 ```
 
 
+```{r changing to factor}
+# changing variables into factors
 
+# data p1
+mics4.ch_p1$HH7R <- as.factor(mics4.ch_p1$HH7R)
+mics4.ch_p1$HH6 <- as.factor(mics4.ch_p1$HH6)
+mics4.ch_p1$windex5 <- as.factor(mics4.ch_p1$windex5)
+mics4.ch_p1$HL4 <- as.factor(mics4.ch_p1$HL4)
+mics4.ch_p1$ethnicity <- as.factor(mics4.ch_p1$ethnicity)
+mics4.ch_p1$melevel <- as.factor(mics4.ch_p1$melevel)
+mics4.ch_p1$MN18_1 <- as.factor(mics4.ch_p1$MN18_1)
+mics4.ch_p1$MN1 <- as.factor(mics4.ch_p1$MN1)
+mics4.ch_p1$MN2A <- as.factor(mics4.ch_p1$MN2A)
+mics4.ch_p1$MN3_1 <- as.factor(mics4.ch_p1$MN3_1)
+
+mics4.ch_p1$penta1_RC_1 <- as.factor(mics4.ch_p1$penta1_RC_1)
+mics4.ch_p1$penta2_RC_1 <- as.factor(mics4.ch_p1$penta2_RC_1)
+mics4.ch_p1$penta3_RC_1 <- as.factor(mics4.ch_p1$penta3_RC_1)
+mics4.ch_p1$penta1_C_1 <- as.factor(mics4.ch_p1$penta1_C_1)
+mics4.ch_p1$penta2_C_1 <- as.factor(mics4.ch_p1$penta2_C_1)
+mics4.ch_p1$penta3_C_1 <- as.factor(mics4.ch_p1$penta3_C_1)
+mics4.ch_p1$penta1_R_1 <- as.factor(mics4.ch_p1$penta1_R_1)
+mics4.ch_p1$penta2_R_1 <- as.factor(mics4.ch_p1$penta2_R_1)
+mics4.ch_p1$penta3_R_1 <- as.factor(mics4.ch_p1$penta3_R_1)
+
+
+```
+
+
+### survey design p1
 
 ```{r survey design}
 
-# Understanding the sample design
-mics4.ch %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
-mics4.ch %>% count(HH6)
-mics4.ch %>% tabyl(HH7, HH6)
 
-mics4.ch %>% count(strata) # 49 rows
-
-# How many clusters:
-
-# Provinces are strata
-mics4.ch %>% summarize(n_clusters = n_distinct(HH7, HH1))
-# 998
-
-mics4.ch %>% summarize(n_clusters = n_distinct(strata, HH1))
-# 998 # same
 
 
 # Make design for pentavalent with selected children aged under 3 and older than 1 year: n = 4314
@@ -1293,5 +1424,484 @@ mics_design_p1 <- svydesign(data = mics4.ch_p1,
 
 ### Descriptive analysis - weighted
 
+```{r descriptive}
+
+
+# taking survey design into account 
+
+# What are interesting things to explore in the dataset?
+
+# Province
+# Area
+# Direction?
+# Wealth score
+# melevel education mother
+# Age
+# Ethnicity
+
+tab <- svytable(~ethnicity, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+tab <- svytable(~melevel, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+  
+tab <- svytable(~HL4, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~windex5, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+tab <- svytable(~HH6, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+tab <- svytable(~HH7R, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+ 
+# combination of independent variables in graphs
+
+svytable(~ethnicity + HH7R, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~ethnicity + windex5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + HH6, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + HH7R, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + windex5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+# Pretty much all looks like you would expect
+
+
+
+# Age should not give too many surprises?
+svytable(~AG2 + HH7R, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=AG2, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~ethnicity + AG2, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = AG2)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~HL4 + AG2, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = AG2)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+```
+
+
+
+
+```{r anc}
+# place of delivery: MN18
+mics4.ch_p1 %>% count(MN18_1)
+tab <- svytable(~MN18_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+# received antenatal care: MN1
+tab <- svytable(~MN1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+# times received antenatal care: MN3
+tab <- svytable(~MN3_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+# antenatal care provider MN2
+mics4.ch_b1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2X)
+
+tab <- svytable(~MN2A, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+tab <- svytable(~MN2B, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+tab <- svytable(~MN2C, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+tab <- svytable(~MN2F, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+tab <- svytable(~MN2G, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+tab <- svytable(~MN2X, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+```
+
+```{r dependent variables}
+
+tab <- svytable(~penta1_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta1_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta1_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+tab <- svytable(~penta2_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta2_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta2_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta3_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta3_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+tab <- svytable(~penta3_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+
+```
+
+
+
+
 ### Bivariate analysis
+
+```{r inference p1}
+
+# Looking at association between independent and dependent variables:
+# HH7R, HH6, windex5, HL4, ethnicity, melevel, MN18_1, MN1, MN2, MN3_1
+# Using design p1: penta1_RC_1, penta2_RC_1, penta3_RC_1.
+
+
+## penta1_RC_1
+
+svytable(~penta1_RC_1 + HH6, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + HH7R, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + windex5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + HL4, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = HL4)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + ethnicity, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = ethnicity)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + melevel, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = melevel)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + MN18_1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = MN18_1)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + MN1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = MN1)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + MN2A, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = MN2A)) +
+  geom_col(position = "fill") 
+
+svytable(~penta1_RC_1 + MN3_1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta1_RC_1, y=Freq, fill = MN3_1)) +
+  geom_col(position = "fill") 
+
+# H0: penta1 coverage not associated with independent variables
+# H1: penta1 coverage associated with independent variables
+svychisq(~penta1_RC_1 + HH6, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + HH7R, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta1_RC_1 + windex5, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + HL4, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta1_RC_1 + ethnicity, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + melevel, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN18_1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN2A, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC_1 + MN3_1, design = mics_design_p1, statistic = "Chisq")
+
+
+
+## penta2_RC_1
+
+svytable(~penta2_RC_1 + HH6, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + HH7R, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + windex5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + HL4, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = HL4)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + ethnicity, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = ethnicity)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + melevel, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = melevel)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + MN18_1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = MN18_1)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + MN1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = MN1)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + MN2A, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = MN2A)) +
+  geom_col(position = "fill") 
+
+svytable(~penta2_RC_1 + MN3_1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta2_RC_1, y=Freq, fill = MN3_1)) +
+  geom_col(position = "fill") 
+
+# H0: penta2 coverage not associated with independent variables
+# H1: penta2 coverage associated with independent variables
+svychisq(~penta2_RC_1 + HH6, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + HH7R, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta2_RC_1 + windex5, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + HL4, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta2_RC_1 + ethnicity, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + melevel, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN18_1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN2A, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta2_RC_1 + MN3_1, design = mics_design_p1, statistic = "Chisq")
+
+
+
+## penta3_RC_1
+
+svytable(~penta3_RC_1 + HH6, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + HH7R, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + windex5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = windex5)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + HL4, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = HL4)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + ethnicity, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = ethnicity)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + melevel, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = melevel)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + MN18_1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = MN18_1)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + MN1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = MN1)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + MN2A, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = MN2A)) +
+  geom_col(position = "fill") 
+
+svytable(~penta3_RC_1 + MN3_1, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=penta3_RC_1, y=Freq, fill = MN3_1)) +
+  geom_col(position = "fill") 
+
+# H0: penta3 coverage not associated with independent variables
+# H1: penta3 coverage associated with independent variables
+svychisq(~penta3_RC_1 + HH6, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + HH7R, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta3_RC_1 + windex5, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + HL4, design = mics_design_p1, statistic = "Chisq") #ns
+svychisq(~penta3_RC_1 + ethnicity, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + melevel, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN18_1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN1, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN2A, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta3_RC_1 + MN3_1, design = mics_design_p1, statistic = "Chisq")
+
+
+
+
+```
 
