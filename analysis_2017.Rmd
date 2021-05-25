@@ -73,10 +73,15 @@ library(tidyverse)
 ## Data
 
 
-```{r dataset mics6}
+```{r dataset mics6 ch}
 
 # package haven
 mics6.ch <- read_sav("./data/mics6/ch.sav")
+
+```
+
+
+```{r dataset mics6 wm}
 
 mics6.wm <- read_sav("./data/mics6/wm.sav")
 
@@ -1177,6 +1182,20 @@ svychisq(~hepb0_RC_24 + MN20_1, design = mics_design_b1, statistic = "Chisq")
 svychisq(~hepb0_RC_24 + MN2, design = mics_design_b1, statistic = "Chisq") 
 svychisq(~hepb0_RC_24 + MN3A, design = mics_design_b1, statistic = "Chisq") 
 svychisq(~hepb0_RC_24 + MN5_1, design = mics_design_b1, statistic = "Chisq")
+
+```
+
+
+```{r odds ratio}
+
+#svyratio(~HH6, denominator = ~ethnicity, design=mics_design_b1) # does not work
+
+
+#mics_design_b2 <- svydesign(data = mics6.ch_b1, weights = ~chweight, id = ~strata+HH1)
+#mics_design_b2
+
+
+#svyratio(~HH6, denominator = ~ethnicity, design=mics_design_b2) # does not work
 
 ```
 
