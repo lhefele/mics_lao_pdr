@@ -442,6 +442,8 @@ mics6.ch_b1 %>% count(hepb0_C24)
 mics6.ch_b1 %>% mutate(hepb0_C = if_else(IM6H0D <= 31 & IM6H0D >=1, 1,
                                         if_else(IM6H0D == 0, 0,
                                         if_else(IM6H0D == 44, 44, 66)))) -> mics6.ch_b1
+
+
 mics6.ch_b1 %>% count(hepb0_C)
 
 # Code variable hepb0_C
@@ -629,43 +631,25 @@ mics6.ch_b1 %>% count(hepb0_R_24) # 0: 2139 1: 1038
 ```{r changing to factor}
 # changing variables into factors
 
-# data b1
-mics6.ch_b1$hh7r_n <- as.numeric(mics6.ch_b1$hh7r)
-mics6.ch_b1$HH6_n <- as.numeric(mics6.ch_b1$HH6)
-mics6.ch_b1$windex5_n <- as.numeric(mics6.ch_b1$windex5)
-mics6.ch_b1$HL4_n <- as.numeric(mics6.ch_b1$HL4)
-mics6.ch_b1$ethnicity_n <- as.numeric(mics6.ch_b1$ethnicity)
-mics6.ch_b1$melevel_n <- as.numeric(mics6.ch_b1$melevel)
-mics6.ch_b1$MN20_1_n <- as.numeric(mics6.ch_b1$MN20_1)
-mics6.ch_b1$MN2_n <- as.numeric(mics6.ch_b1$MN2)
-mics6.ch_b1$MN3A_n <- as.numeric(mics6.ch_b1$MN3A)
-mics6.ch_b1$MN5_1_n <- as.numeric(mics6.ch_b1$MN5_1)
-
-mics6.ch_b1$hepb0_RC_2_n <- as.numeric(mics6.ch_b1$hepb0_RC_2)
-mics6.ch_b1$hepb0_RC_24_n <- as.numeric(mics6.ch_b1$hepb0_RC_24)
-mics6.ch_b1$hepb0_C_2_n <- as.numeric(mics6.ch_b1$hepb0_C_2)
-mics6.ch_b1$hepb0_C_24_n <- as.numeric(mics6.ch_b1$hepb0_C_24)
-mics6.ch_b1$hepb0_R_2_n <- as.numeric(mics6.ch_b1$hepb0_R_2)
-mics6.ch_b1$hepb0_R_24_n <- as.numeric(mics6.ch_b1$hepb0_R_24)
 
 # data b1
-mics6.ch_b1$hh7r_f <- as.factor(mics6.ch_b1$hh7r)
-mics6.ch_b1$HH6_f <- as.factor(mics6.ch_b1$HH6)
-mics6.ch_b1$windex5_f <- as.factor(mics6.ch_b1$windex5)
-mics6.ch_b1$HL4_f <- as.factor(mics6.ch_b1$HL4)
-mics6.ch_b1$ethnicity_f <- as.factor(mics6.ch_b1$ethnicity)
-mics6.ch_b1$melevel_f <- as.factor(mics6.ch_b1$melevel)
-mics6.ch_b1$MN20_1_f <- as.factor(mics6.ch_b1$MN20_1)
-mics6.ch_b1$MN2_f <- as.factor(mics6.ch_b1$MN2)
-mics6.ch_b1$MN3A_f <- as.factor(mics6.ch_b1$MN3A)
-mics6.ch_b1$MN5_1_f <- as.factor(mics6.ch_b1$MN5_1)
+mics6.ch_b1$hh7r <- as.factor(mics6.ch_b1$hh7r)
+mics6.ch_b1$HH6 <- as.factor(mics6.ch_b1$HH6)
+mics6.ch_b1$windex5 <- as.factor(mics6.ch_b1$windex5)
+mics6.ch_b1$HL4 <- as.factor(mics6.ch_b1$HL4)
+mics6.ch_b1$ethnicity <- as.factor(mics6.ch_b1$ethnicity)
+mics6.ch_b1$melevel <- as.factor(mics6.ch_b1$melevel)
+mics6.ch_b1$MN20_1 <- as.factor(mics6.ch_b1$MN20_1)
+mics6.ch_b1$MN2 <- as.factor(mics6.ch_b1$MN2)
+mics6.ch_b1$MN3A <- as.factor(mics6.ch_b1$MN3A)
+mics6.ch_b1$MN5_1 <- as.factor(mics6.ch_b1$MN5_1)
 
-mics6.ch_b1$hepb0_RC_2_f <- as.factor(mics6.ch_b1$hepb0_RC_2)
-mics6.ch_b1$hepb0_RC_24_f <- as.factor(mics6.ch_b1$hepb0_RC_24)
-mics6.ch_b1$hepb0_C_2_f <- as.factor(mics6.ch_b1$hepb0_C_2)
-mics6.ch_b1$hepb0_C_24_f <- as.factor(mics6.ch_b1$hepb0_C_24)
-mics6.ch_b1$hepb0_R_2_f <- as.factor(mics6.ch_b1$hepb0_R_2)
-mics6.ch_b1$hepb0_R_24_f <- as.factor(mics6.ch_b1$hepb0_R_24)
+mics6.ch_b1$hepb0_RC_2 <- as.factor(mics6.ch_b1$hepb0_RC_2)
+mics6.ch_b1$hepb0_RC_24 <- as.factor(mics6.ch_b1$hepb0_RC_24)
+mics6.ch_b1$hepb0_C_2 <- as.factor(mics6.ch_b1$hepb0_C_2)
+mics6.ch_b1$hepb0_C_24 <- as.factor(mics6.ch_b1$hepb0_C_24)
+mics6.ch_b1$hepb0_R_2 <- as.factor(mics6.ch_b1$hepb0_R_2)
+mics6.ch_b1$hepb0_R_24 <- as.factor(mics6.ch_b1$hepb0_R_24)
 ```
 
 
@@ -1207,16 +1191,22 @@ svychisq(~hepb0_RC_24 + MN5_1, design = mics_design_b1, statistic = "Chisq")
 ```
 
 
-```{r odds ratio}
+```{r odds ratio hepb0}
+class(mics6.ch_b1$hepb0_RC_2)
+class(mics6.ch_b1$HH6)
 
-#svyratio(~HH6, denominator = ~ethnicity, design=mics_design_b1) # does not work
+summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~hh7r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~windex5, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~HL4, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~ethnicity, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~melevel, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~MN20_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~MN2, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~MN3A, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(hepb0_RC_2 ~MN5_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
 
 
-#mics_design_b2 <- svydesign(data = mics6.ch_b1, weights = ~chweight, id = ~strata+HH1)
-#mics_design_b2
-
-
-#svyratio(~HH6, denominator = ~ethnicity, design=mics_design_b2) # does not work
 
 ```
 
@@ -1477,7 +1467,7 @@ mics6.ch_p1 %>%
 
 
 # make a new variable combining IM20 and IM21. 
-# IM 21: 2,3,4,5,6 of 7 means having the second pentavalent vaccine, IM21: 1,8 or 9 had only one or dont know whether they had one pentavalent vaccine or more, therefore do not include them assign to 0 together with IM20 No and DK.
+# IM 21: 2,3,4,5,6 or 7 means having the second pentavalent vaccine, IM21: 1,8 or 9 had only one or dont know whether they had one pentavalent vaccine or more, therefore do not include them assign to 0 together with IM20 No and DK.
  
 mics6.ch_p1 %>% count(penta2_R, penta1_R)
 mics6.ch_p1 %>% mutate(penta2_R_3 = coalesce(penta2_R, penta1_R)) -> mics6.ch_p1 
@@ -1669,8 +1659,22 @@ mics6.ch_p1 %>% count(penta3_R_1) # 0: 1571 1: 864
 mics6.ch_p1 %>% count(penta3_C_1) # 0: 443  1: 1662
 
 
+# check if they got all 3 vaccinations, not only second or third. 
+mics6.ch_p1 %>% count(penta1_R_1_n, penta2_R_1_n, penta3_R_1_n)
+mics6.ch_p1 %>% count(penta1_R_1_f, penta2_R_1_f, penta3_R_1_f)
+mics6.ch_p1 %>% count(penta1_R_1, penta2_R_1, penta3_R_1)
+mics6.ch_p1 %>% count(penta1_C_1, penta2_C_1, penta3_C_1)
+mics6.ch_p1 %>% count(penta1_RC_1, penta2_RC_1, penta3_RC_1)
+mics6.ch_p1 %>% count(penta1_RC_1_f, penta2_RC_1_f, penta3_RC_1_f)
+mics6.ch_p1 %>% count(penta1_R_1, penta2_R_1, penta3_R_1, penta2_RC, penta3_RC)
 
+# new variable penta123 got at least three vaccinations according to card or recall
+mics6.ch_p1 %>% mutate(penta123_RC = if_else(penta1_RC_1 == 1 & penta2_RC_1 == 1 & penta3_RC_1 == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta123_RC)
 
+# new variable penta12 got at least two vaccinations according to card or recall
+mics6.ch_p1 %>% mutate(penta12_RC = if_else(penta1_RC_1 == 1 & penta2_RC_1 == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta12_RC)
 
 ```
 
@@ -2222,14 +2226,16 @@ svychisq(~penta3_RC_1 + MN5_1, design = mics_design_p1, statistic = "Chisq")
 
 ```
 
-```{r}
+```{r inference odds ratio}
 class(mics6.ch_b1$hepb0_RC_2)
 class(mics6.ch_b1$HH6)
-model <- svyglm(hepb0_RC_2_n ~HH6_n, design = mics_design_b1)
-summary(model)
 
-summ(svyglm(hepb0_RC_2_n ~HH6_n, design = mics_design_b1, family = quasibinomial()), exp = TRUE)
-svyratio(~hepb0_RC_2_n, ~HH6_n, design = mics_design_b1)
+summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+
+
+
+
+
 ```
 
 
