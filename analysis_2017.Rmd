@@ -65,6 +65,8 @@ library(naniar)
 
 library(tidyverse)
 
+library(jtools)
+
 ```
 
 
@@ -623,23 +625,42 @@ mics6.ch_b1 %>% count(hepb0_R_24) # 0: 2139 1: 1038
 # changing variables into factors
 
 # data b1
-mics6.ch_b1$hh7r <- as.factor(mics6.ch_b1$hh7r)
-mics6.ch_b1$HH6 <- as.factor(mics6.ch_b1$HH6)
-mics6.ch_b1$windex5 <- as.factor(mics6.ch_b1$windex5)
-mics6.ch_b1$HL4 <- as.factor(mics6.ch_b1$HL4)
-mics6.ch_b1$ethnicity <- as.factor(mics6.ch_b1$ethnicity)
-mics6.ch_b1$melevel <- as.factor(mics6.ch_b1$melevel)
-mics6.ch_b1$MN20_1 <- as.factor(mics6.ch_b1$MN20_1)
-mics6.ch_b1$MN2 <- as.factor(mics6.ch_b1$MN2)
-mics6.ch_b1$MN3A <- as.factor(mics6.ch_b1$MN3A)
-mics6.ch_b1$MN5_1 <- as.factor(mics6.ch_b1$MN5_1)
+mics6.ch_b1$hh7r_n <- as.numeric(mics6.ch_b1$hh7r)
+mics6.ch_b1$HH6_n <- as.numeric(mics6.ch_b1$HH6)
+mics6.ch_b1$windex5_n <- as.numeric(mics6.ch_b1$windex5)
+mics6.ch_b1$HL4_n <- as.numeric(mics6.ch_b1$HL4)
+mics6.ch_b1$ethnicity_n <- as.numeric(mics6.ch_b1$ethnicity)
+mics6.ch_b1$melevel_n <- as.numeric(mics6.ch_b1$melevel)
+mics6.ch_b1$MN20_1_n <- as.numeric(mics6.ch_b1$MN20_1)
+mics6.ch_b1$MN2_n <- as.numeric(mics6.ch_b1$MN2)
+mics6.ch_b1$MN3A_n <- as.numeric(mics6.ch_b1$MN3A)
+mics6.ch_b1$MN5_1_n <- as.numeric(mics6.ch_b1$MN5_1)
 
-mics6.ch_b1$hepb0_RC_2 <- as.factor(mics6.ch_b1$hepb0_RC_2)
-mics6.ch_b1$hepb0_RC_24 <- as.factor(mics6.ch_b1$hepb0_RC_24)
-mics6.ch_b1$hepb0_C_2 <- as.factor(mics6.ch_b1$hepb0_C_2)
-mics6.ch_b1$hepb0_C_24 <- as.factor(mics6.ch_b1$hepb0_C_24)
-mics6.ch_b1$hepb0_R_2 <- as.factor(mics6.ch_b1$hepb0_R_2)
-mics6.ch_b1$hepb0_R_24 <- as.factor(mics6.ch_b1$hepb0_R_24)
+mics6.ch_b1$hepb0_RC_2_n <- as.numeric(mics6.ch_b1$hepb0_RC_2)
+mics6.ch_b1$hepb0_RC_24_n <- as.numeric(mics6.ch_b1$hepb0_RC_24)
+mics6.ch_b1$hepb0_C_2_n <- as.numeric(mics6.ch_b1$hepb0_C_2)
+mics6.ch_b1$hepb0_C_24_n <- as.numeric(mics6.ch_b1$hepb0_C_24)
+mics6.ch_b1$hepb0_R_2_n <- as.numeric(mics6.ch_b1$hepb0_R_2)
+mics6.ch_b1$hepb0_R_24_n <- as.numeric(mics6.ch_b1$hepb0_R_24)
+
+# data b1
+mics6.ch_b1$hh7r_f <- as.factor(mics6.ch_b1$hh7r)
+mics6.ch_b1$HH6_f <- as.factor(mics6.ch_b1$HH6)
+mics6.ch_b1$windex5_f <- as.factor(mics6.ch_b1$windex5)
+mics6.ch_b1$HL4_f <- as.factor(mics6.ch_b1$HL4)
+mics6.ch_b1$ethnicity_f <- as.factor(mics6.ch_b1$ethnicity)
+mics6.ch_b1$melevel_f <- as.factor(mics6.ch_b1$melevel)
+mics6.ch_b1$MN20_1_f <- as.factor(mics6.ch_b1$MN20_1)
+mics6.ch_b1$MN2_f <- as.factor(mics6.ch_b1$MN2)
+mics6.ch_b1$MN3A_f <- as.factor(mics6.ch_b1$MN3A)
+mics6.ch_b1$MN5_1_f <- as.factor(mics6.ch_b1$MN5_1)
+
+mics6.ch_b1$hepb0_RC_2_f <- as.factor(mics6.ch_b1$hepb0_RC_2)
+mics6.ch_b1$hepb0_RC_24_f <- as.factor(mics6.ch_b1$hepb0_RC_24)
+mics6.ch_b1$hepb0_C_2_f <- as.factor(mics6.ch_b1$hepb0_C_2)
+mics6.ch_b1$hepb0_C_24_f <- as.factor(mics6.ch_b1$hepb0_C_24)
+mics6.ch_b1$hepb0_R_2_f <- as.factor(mics6.ch_b1$hepb0_R_2)
+mics6.ch_b1$hepb0_R_24_f <- as.factor(mics6.ch_b1$hepb0_R_24)
 ```
 
 
@@ -790,41 +811,41 @@ mics6.ch_b1 %>%
 
 # taking survey design into account 
 
-tab_ethnicity <- svytable(~ethnicity, design = mics_design_b1) %>% 
+tab <- svytable(~ethnicity, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_ethnicity
+tab
 
-tab_melevel <- svytable(~melevel, design = mics_design_b1) %>% 
+tab <- svytable(~melevel, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_melevel 
+tab 
   
-tab_HL4 <- svytable(~HL4, design = mics_design_b1) %>% 
+tab <- svytable(~HL4, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_HL4 
+tab 
 
-tab_windex5 <- svytable(~windex5, design = mics_design_b1) %>% 
+tab <- svytable(~windex5, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_windex5 
+tab 
 
-tab_HH6 <- svytable(~HH6, design = mics_design_b1) %>% 
+tab <- svytable(~HH6, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_HH6 
+tab 
 
-tab_hh7r <- svytable(~hh7r, design = mics_design_b1) %>% 
+tab <- svytable(~hh7r, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hh7r 
+tab 
 
 
 
@@ -908,64 +929,64 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = UB2)) +
 ```{r anc variables}
 # place of delivery: MN20
 mics6.ch_b1 %>% count(MN20_1)
-tab_MN20 <- svytable(~MN20_1, design = mics_design_b1) %>% 
+tab <- svytable(~MN20_1, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN20 
+tab 
 
 # received antenatal care: MN2
-tab_MN2 <- svytable(~MN2, design = mics_design_b1) %>% 
+tab <- svytable(~MN2, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2
+tab
 
 # times received antenatal care: MN5
-tab_MN5 <- svytable(~MN5_1, design = mics_design_b1) %>% 
+tab <- svytable(~MN5_1, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN5 
+tab 
 
 # antenatal care provider MN3
 mics6.ch_b1 %>% count(MN3A, MN3B, MN3C,MN3F, MN3G, MN3X)
 
-tab_MN3A <- svytable(~MN3A, design = mics_design_b1) %>% 
+tab <- svytable(~MN3A, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3A 
-tab_MN3B <- svytable(~MN3B, design = mics_design_b1) %>% 
+tab 
+tab <- svytable(~MN3B, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3B
-tab_MN3C <- svytable(~MN3C, design = mics_design_b1) %>% 
+tab
+tab <- svytable(~MN3C, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3C
-tab_MN3F <- svytable(~MN3F, design = mics_design_b1) %>% 
+tab
+tab <- svytable(~MN3F, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3F
-tab_MN3G <- svytable(~MN3G, design = mics_design_b1) %>% 
+tab
+tab <- svytable(~MN3G, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3G
-tab_MN3X <- svytable(~MN3X, design = mics_design_b1) %>% 
+tab
+tab <- svytable(~MN3X, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3X
-tab_MN3NR <- svytable(~MN3NR, design = mics_design_b1) %>% 
+tab
+tab <- svytable(~MN3NR, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3NR
+tab
 
 ```
 
@@ -975,41 +996,41 @@ tab_MN3NR
 ```{r dependent variables}
 
 
-tab_hepb0_RC_2 <- svytable(~hepb0_RC_2, design = mics_design_b1) %>% 
+tab <- svytable(~hepb0_RC_2, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hepb0_RC_2 
+tab 
 
-tab_hepb0_RC_24 <- svytable(~hepb0_RC_24, design = mics_design_b1) %>% 
+tab <- svytable(~hepb0_RC_24, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hepb0_RC_24 
+tab 
 
-tab_hepb0_C_2 <- svytable(~hepb0_C_2, design = mics_design_b1) %>% 
+tab <- svytable(~hepb0_C_2, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hepb0_C_2 
+tab 
 
-tab_hepb0_C_24 <- svytable(~hepb0_C_24, design = mics_design_b1) %>% 
+tab <- svytable(~hepb0_C_24, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hepb0_C_24 
+tab 
 
-tab_hepb0_R_2 <- svytable(~hepb0_R_2, design = mics_design_b1) %>% 
+tab <- svytable(~hepb0_R_2, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hepb0_R_2 
+tab 
 
-tab_hepb0_R_24 <- svytable(~hepb0_R_24, design = mics_design_b1) %>%
+tab <- svytable(~hepb0_R_24, design = mics_design_b1) %>%
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hepb0_R_24
+tab
 
 ```
 
@@ -1645,22 +1666,40 @@ mics6.ch_p1 %>% count(penta3_C_1) # 0: 443  1: 1662
 # changing variables into factors
 
 # data p1
-mics6.ch_p1$hh7r <- as.factor(mics6.ch_p1$hh7r)
-mics6.ch_p1$HH6 <- as.factor(mics6.ch_p1$HH6)
-mics6.ch_p1$windex5 <- as.factor(mics6.ch_p1$windex5)
-mics6.ch_p1$HL4 <- as.factor(mics6.ch_p1$HL4)
-mics6.ch_p1$ethnicity <- as.factor(mics6.ch_p1$ethnicity)
-mics6.ch_p1$melevel <- as.factor(mics6.ch_p1$melevel)
+mics6.ch_p1$hh7r_n <- as.numeric(mics6.ch_p1$hh7r)
+mics6.ch_p1$HH6_n <- as.numeric(mics6.ch_p1$HH6)
+mics6.ch_p1$windex5_n <- as.numeric(mics6.ch_p1$windex5)
+mics6.ch_p1$HL4_n <- as.numeric(mics6.ch_p1$HL4)
+mics6.ch_p1$ethnicity_n <- as.numeric(mics6.ch_p1$ethnicity)
+mics6.ch_p1$melevel_n <- as.numeric(mics6.ch_p1$melevel)
 
-mics6.ch_p1$penta1_RC_1 <- as.factor(mics6.ch_p1$penta1_RC_1)
-mics6.ch_p1$penta2_RC_1 <- as.factor(mics6.ch_p1$penta2_RC_1)
-mics6.ch_p1$penta3_RC_1 <- as.factor(mics6.ch_p1$penta3_RC_1)
-mics6.ch_p1$penta1_C_1 <- as.factor(mics6.ch_p1$penta1_C_1)
-mics6.ch_p1$penta2_C_1 <- as.factor(mics6.ch_p1$penta2_C_1)
-mics6.ch_p1$penta3_C_1 <- as.factor(mics6.ch_p1$penta3_C_1)
-mics6.ch_p1$penta1_R_1 <- as.factor(mics6.ch_p1$penta1_R_1)
-mics6.ch_p1$penta2_R_1 <- as.factor(mics6.ch_p1$penta2_R_1)
-mics6.ch_p1$penta3_R_1 <- as.factor(mics6.ch_p1$penta3_R_1)
+mics6.ch_p1$penta1_RC_1_n <- as.numeric(mics6.ch_p1$penta1_RC_1)
+mics6.ch_p1$penta2_RC_1_n <- as.numeric(mics6.ch_p1$penta2_RC_1)
+mics6.ch_p1$penta3_RC_1_n <- as.numeric(mics6.ch_p1$penta3_RC_1)
+mics6.ch_p1$penta1_C_1_n <- as.numeric(mics6.ch_p1$penta1_C_1)
+mics6.ch_p1$penta2_C_1_n <- as.numeric(mics6.ch_p1$penta2_C_1)
+mics6.ch_p1$penta3_C_1_n <- as.numeric(mics6.ch_p1$penta3_C_1)
+mics6.ch_p1$penta1_R_1_n <- as.numeric(mics6.ch_p1$penta1_R_1)
+mics6.ch_p1$penta2_R_1_n <- as.numeric(mics6.ch_p1$penta2_R_1)
+mics6.ch_p1$penta3_R_1_n <- as.numeric(mics6.ch_p1$penta3_R_1)
+
+# data p1
+mics6.ch_p1$hh7r_f <- as.factor(mics6.ch_p1$hh7r)
+mics6.ch_p1$HH6_f <- as.factor(mics6.ch_p1$HH6)
+mics6.ch_p1$windex5_f <- as.factor(mics6.ch_p1$windex5)
+mics6.ch_p1$HL4_f <- as.factor(mics6.ch_p1$HL4)
+mics6.ch_p1$ethnicity_f <- as.factor(mics6.ch_p1$ethnicity)
+mics6.ch_p1$melevel_f <- as.factor(mics6.ch_p1$melevel)
+
+mics6.ch_p1$penta1_RC_1_f <- as.factor(mics6.ch_p1$penta1_RC_1)
+mics6.ch_p1$penta2_RC_1_f <- as.factor(mics6.ch_p1$penta2_RC_1)
+mics6.ch_p1$penta3_RC_1_f <- as.factor(mics6.ch_p1$penta3_RC_1)
+mics6.ch_p1$penta1_C_1_f <- as.factor(mics6.ch_p1$penta1_C_1)
+mics6.ch_p1$penta2_C_1_f <- as.factor(mics6.ch_p1$penta2_C_1)
+mics6.ch_p1$penta3_C_1_f <- as.factor(mics6.ch_p1$penta3_C_1)
+mics6.ch_p1$penta1_R_1_f <- as.factor(mics6.ch_p1$penta1_R_1)
+mics6.ch_p1$penta2_R_1_f <- as.factor(mics6.ch_p1$penta2_R_1)
+mics6.ch_p1$penta3_R_1_f <- as.factor(mics6.ch_p1$penta3_R_1)
 ```
 
 
@@ -1689,41 +1728,41 @@ mics_design_p1
 
 # taking survey design into account 
 
-tab_ethnicity <- svytable(~ethnicity, design = mics_design_p1) %>% 
+tab <- svytable(~ethnicity, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_ethnicity
+tab  
 
-tab_melevel <- svytable(~melevel, design = mics_design_p1) %>% 
+tab <- svytable(~melevel, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_melevel 
+tab 
   
-tab_HL4 <- svytable(~HL4, design = mics_design_p1) %>% 
+tab <- svytable(~HL4, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_HL4 
+tab 
 
-tab_windex5 <- svytable(~windex5, design = mics_design_p1) %>% 
+tab <- svytable(~windex5, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_windex5 
+tab 
 
-tab_HH6 <- svytable(~HH6, design = mics_design_p1) %>% 
+tab <- svytable(~HH6, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_HH6 
+tab 
 
-tab_hh7r <- svytable(~hh7r, design = mics_design_p1) %>% 
+tab <- svytable(~hh7r, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_hh7r 
+tab 
 
 
 
@@ -1802,64 +1841,64 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = UB2)) +
 
 # place of delivery: MN20
 mics6.ch_p1 %>% count(MN20_1)
-tab_MN20 <- svytable(~MN20_1, design = mics_design_p1) %>% 
+tab <- svytable(~MN20_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN20 
+tab 
 
 # received antenatal care: MN2
-tab_MN2 <- svytable(~MN2, design = mics_design_p1) %>% 
+tab <- svytable(~MN2, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN2
+tab
 
 # times received antenatal care: MN5
-tab_MN5 <- svytable(~MN5_1, design = mics_design_p1) %>% 
+tab <- svytable(~MN5_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN5 
+tab 
 
 # antenatal care provider MN3
 mics6.ch_p1 %>% count(MN3A, MN3B, MN3C,MN3F, MN3G, MN3X)
 
-tab_MN3A <- svytable(~MN3A, design = mics_design_p1) %>% 
+tab <- svytable(~MN3A, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3A 
-tab_MN3B <- svytable(~MN3B, design = mics_design_p1) %>% 
+tab 
+tab <- svytable(~MN3B, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3B
-tab_MN3C <- svytable(~MN3C, design = mics_design_p1) %>% 
+tab
+tab <- svytable(~MN3C, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3C
-tab_MN3F <- svytable(~MN3F, design = mics_design_p1) %>% 
+tab
+tab <- svytable(~MN3F, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3F
-tab_MN3G <- svytable(~MN3G, design = mics_design_p1) %>% 
+tab
+tab <- svytable(~MN3G, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3G
-tab_MN3X <- svytable(~MN3X, design = mics_design_p1) %>% 
+tab
+tab <- svytable(~MN3X, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3X
-tab_MN3NR <- svytable(~MN3NR, design = mics_design_p1) %>% 
+tab
+tab <- svytable(~MN3NR, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_MN3NR
+tab
 
 
 ```
@@ -1868,59 +1907,59 @@ tab_MN3NR
 ```{r dependent variables}
  
 
-tab_penta1_RC_1 <- svytable(~penta1_RC_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta1_RC_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta1_RC_1 
+tab 
 
-tab_penta1_R_1 <- svytable(~penta1_R_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta1_R_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta1_R_1 
+tab 
 
-tab_penta1_C_1 <- svytable(~penta1_C_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta1_C_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta1_C_1 
+tab 
 
-tab_penta2_RC_1 <- svytable(~penta2_RC_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta2_RC_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta2_RC_1 
+tab 
 
-tab_penta2_R_1 <- svytable(~penta2_R_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta2_R_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta2_R_1 
+tab 
 
-tab_penta2_C_1 <- svytable(~penta2_C_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta2_C_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta2_C_1 
+tab
 
-tab_penta3_RC_1 <- svytable(~penta3_RC_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta3_RC_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta3_RC_1 
+tab
 
-tab_penta3_R_1 <- svytable(~penta3_R_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta3_R_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta3_R_1 
+tab
 
-tab_penta3_C_1 <- svytable(~penta3_C_1, design = mics_design_p1) %>% 
+tab <- svytable(~penta3_C_1, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
-tab_penta3_C_1 
+tab
 
 
 ```
@@ -2164,6 +2203,15 @@ svychisq(~penta3_RC_1 + MN5_1, design = mics_design_p1, statistic = "Chisq")
 
 ```
 
+```{r}
+class(mics6.ch_b1$hepb0_RC_2)
+class(mics6.ch_b1$HH6)
+model <- svyglm(hepb0_RC_2_n ~HH6_n, design = mics_design_b1)
+summary(model)
+
+summ(svyglm(hepb0_RC_2_n ~HH6_n, design = mics_design_b1, family = quasibinomial()), exp = TRUE)
+svyratio(~hepb0_RC_2_n, ~HH6_n, design = mics_design_b1)
+```
 
 
 
