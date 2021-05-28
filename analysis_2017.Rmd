@@ -348,6 +348,15 @@ mics6.wm %>% count(MN5)
 
 ```
 
+```{r recode categories in independent variables}
+
+
+mics6.ch_wm %>% mutate(ethnicity_r = recode(ethnicity, "9" = 4)) -> mics6.ch_wm
+mics6.ch_wm %>% count(ethnicity_r, ethnicity)
+
+mics6.ch_wm %>% mutate(melevel_r = recode(melevel, "3" = 2, "4" = 2, "5" = 2, "9" = 0)) -> mics6.ch_wm
+mics6.ch_wm %>% count(melevel, melevel_r)
+```
 
 
 ### Subsets
@@ -639,6 +648,8 @@ mics6.ch_b1$windex5 <- as.factor(mics6.ch_b1$windex5)
 mics6.ch_b1$HL4 <- as.factor(mics6.ch_b1$HL4)
 mics6.ch_b1$ethnicity <- as.factor(mics6.ch_b1$ethnicity)
 mics6.ch_b1$melevel <- as.factor(mics6.ch_b1$melevel)
+mics6.ch_b1$ethnicity_r <- as.factor(mics6.ch_b1$ethnicity_r)
+mics6.ch_b1$melevel_r <- as.factor(mics6.ch_b1$melevel_r)
 mics6.ch_b1$MN20_1 <- as.factor(mics6.ch_b1$MN20_1)
 mics6.ch_b1$MN2 <- as.factor(mics6.ch_b1$MN2)
 mics6.ch_b1$MN3A <- as.factor(mics6.ch_b1$MN3A)
@@ -1195,16 +1206,33 @@ svychisq(~hepb0_RC_24 + MN5_1, design = mics_design_b1, statistic = "Chisq")
 class(mics6.ch_b1$hepb0_RC_2)
 class(mics6.ch_b1$HH6)
 
-summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~hh7r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~windex5, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~HL4, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~ethnicity, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~melevel, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~MN20_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~MN2, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~MN3A, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
-summ(svyglm(hepb0_RC_2 ~MN5_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+#hepb0 yes/no
+summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~hh7r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~windex5, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~HL4, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ethnicity, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~melevel, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ethnicity_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~melevel_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~MN20_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~MN2, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~MN3A, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~MN5_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+
+#hep0 within 24 hours
+summ(svyglm(hepb0_RC_24 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~hh7r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~windex5, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~HL4, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ethnicity, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~melevel, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ethnicity_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~melevel_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~MN20_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~MN2, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~MN3A, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~MN5_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
 
@@ -1660,12 +1688,11 @@ mics6.ch_p1 %>% count(penta3_C_1) # 0: 443  1: 1662
 
 
 # check if they got all 3 vaccinations, not only second or third. 
-mics6.ch_p1 %>% count(penta1_R_1_n, penta2_R_1_n, penta3_R_1_n)
-mics6.ch_p1 %>% count(penta1_R_1_f, penta2_R_1_f, penta3_R_1_f)
+
+
 mics6.ch_p1 %>% count(penta1_R_1, penta2_R_1, penta3_R_1)
 mics6.ch_p1 %>% count(penta1_C_1, penta2_C_1, penta3_C_1)
 mics6.ch_p1 %>% count(penta1_RC_1, penta2_RC_1, penta3_RC_1)
-mics6.ch_p1 %>% count(penta1_RC_1_f, penta2_RC_1_f, penta3_RC_1_f)
 mics6.ch_p1 %>% count(penta1_R_1, penta2_R_1, penta3_R_1, penta2_RC, penta3_RC)
 
 # new variable penta123 got at least three vaccinations according to card or recall
@@ -1688,41 +1715,34 @@ mics6.ch_p1 %>% count(penta12_RC)
 ```{r changing to factor }
 # changing variables into factors
 
-# data p1
-mics6.ch_p1$hh7r_n <- as.numeric(mics6.ch_p1$hh7r)
-mics6.ch_p1$HH6_n <- as.numeric(mics6.ch_p1$HH6)
-mics6.ch_p1$windex5_n <- as.numeric(mics6.ch_p1$windex5)
-mics6.ch_p1$HL4_n <- as.numeric(mics6.ch_p1$HL4)
-mics6.ch_p1$ethnicity_n <- as.numeric(mics6.ch_p1$ethnicity)
-mics6.ch_p1$melevel_n <- as.numeric(mics6.ch_p1$melevel)
 
-mics6.ch_p1$penta1_RC_1_n <- as.numeric(mics6.ch_p1$penta1_RC_1)
-mics6.ch_p1$penta2_RC_1_n <- as.numeric(mics6.ch_p1$penta2_RC_1)
-mics6.ch_p1$penta3_RC_1_n <- as.numeric(mics6.ch_p1$penta3_RC_1)
-mics6.ch_p1$penta1_C_1_n <- as.numeric(mics6.ch_p1$penta1_C_1)
-mics6.ch_p1$penta2_C_1_n <- as.numeric(mics6.ch_p1$penta2_C_1)
-mics6.ch_p1$penta3_C_1_n <- as.numeric(mics6.ch_p1$penta3_C_1)
-mics6.ch_p1$penta1_R_1_n <- as.numeric(mics6.ch_p1$penta1_R_1)
-mics6.ch_p1$penta2_R_1_n <- as.numeric(mics6.ch_p1$penta2_R_1)
-mics6.ch_p1$penta3_R_1_n <- as.numeric(mics6.ch_p1$penta3_R_1)
 
 # data p1
-mics6.ch_p1$hh7r_f <- as.factor(mics6.ch_p1$hh7r)
-mics6.ch_p1$HH6_f <- as.factor(mics6.ch_p1$HH6)
-mics6.ch_p1$windex5_f <- as.factor(mics6.ch_p1$windex5)
-mics6.ch_p1$HL4_f <- as.factor(mics6.ch_p1$HL4)
-mics6.ch_p1$ethnicity_f <- as.factor(mics6.ch_p1$ethnicity)
-mics6.ch_p1$melevel_f <- as.factor(mics6.ch_p1$melevel)
+mics6.ch_p1$hh7r <- as.factor(mics6.ch_p1$hh7r)
+mics6.ch_p1$HH6 <- as.factor(mics6.ch_p1$HH6)
+mics6.ch_p1$windex5 <- as.factor(mics6.ch_p1$windex5)
+mics6.ch_p1$HL4 <- as.factor(mics6.ch_p1$HL4)
+mics6.ch_p1$ethnicity <- as.factor(mics6.ch_p1$ethnicity)
+mics6.ch_p1$melevel <- as.factor(mics6.ch_p1$melevel)
+mics6.ch_p1$ethnicity_r <- as.factor(mics6.ch_p1$ethnicity_r)
+mics6.ch_p1$melevel_r <- as.factor(mics6.ch_p1$melevel_r)
+mics6.ch_p1$MN20_1 <- as.factor(mics6.ch_p1$MN20_1)
+mics6.ch_p1$MN2 <- as.factor(mics6.ch_p1$MN2)
+mics6.ch_p1$MN3A <- as.factor(mics6.ch_p1$MN3A)
+mics6.ch_p1$MN5_1 <- as.factor(mics6.ch_p1$MN5_1)
 
-mics6.ch_p1$penta1_RC_1_f <- as.factor(mics6.ch_p1$penta1_RC_1)
-mics6.ch_p1$penta2_RC_1_f <- as.factor(mics6.ch_p1$penta2_RC_1)
-mics6.ch_p1$penta3_RC_1_f <- as.factor(mics6.ch_p1$penta3_RC_1)
-mics6.ch_p1$penta1_C_1_f <- as.factor(mics6.ch_p1$penta1_C_1)
-mics6.ch_p1$penta2_C_1_f <- as.factor(mics6.ch_p1$penta2_C_1)
-mics6.ch_p1$penta3_C_1_f <- as.factor(mics6.ch_p1$penta3_C_1)
-mics6.ch_p1$penta1_R_1_f <- as.factor(mics6.ch_p1$penta1_R_1)
-mics6.ch_p1$penta2_R_1_f <- as.factor(mics6.ch_p1$penta2_R_1)
-mics6.ch_p1$penta3_R_1_f <- as.factor(mics6.ch_p1$penta3_R_1)
+mics6.ch_p1$penta1_RC_1 <- as.factor(mics6.ch_p1$penta1_RC_1)
+mics6.ch_p1$penta2_RC_1 <- as.factor(mics6.ch_p1$penta2_RC_1)
+mics6.ch_p1$penta3_RC_1 <- as.factor(mics6.ch_p1$penta3_RC_1)
+mics6.ch_p1$penta12_RC <- as.factor(mics6.ch_p1$penta12_RC)
+mics6.ch_p1$penta123_RC <- as.factor(mics6.ch_p1$penta123_RC)
+
+mics6.ch_p1$penta1_C_1 <- as.factor(mics6.ch_p1$penta1_C_1)
+mics6.ch_p1$penta2_C_1 <- as.factor(mics6.ch_p1$penta2_C_1)
+mics6.ch_p1$penta3_C_1 <- as.factor(mics6.ch_p1$penta3_C_1)
+mics6.ch_p1$penta1_R_1 <- as.factor(mics6.ch_p1$penta1_R_1)
+mics6.ch_p1$penta2_R_1 <- as.factor(mics6.ch_p1$penta2_R_1)
+mics6.ch_p1$penta3_R_1 <- as.factor(mics6.ch_p1$penta3_R_1)
 ```
 
 
@@ -2226,15 +2246,24 @@ svychisq(~penta3_RC_1 + MN5_1, design = mics_design_p1, statistic = "Chisq")
 
 ```
 
-```{r inference odds ratio}
-class(mics6.ch_b1$hepb0_RC_2)
-class(mics6.ch_b1$HH6)
+```{r odds ratio pentavalent}
+class(mics6.ch_p1$penta123_RC)
 
-summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE)
+summ(svyglm(penta123_RC ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~hh7r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~windex5, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~HL4, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ethnicity, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~MN20_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~MN2, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~MN3A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~MN5_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-
-
-
+mics6.ch_p1 %>% count(MN5_1)
+mics6.ch_b1 %>% count(MN5_1)
 
 ```
 
