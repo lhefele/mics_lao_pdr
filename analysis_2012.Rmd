@@ -62,6 +62,9 @@ library(naniar)
 
 library(jtools)
 
+library(MASS)
+
+library(lmtest)
 ```
 
 
@@ -2485,7 +2488,7 @@ svychisq(~penta123_R + MN3_1, design = mics_design_p1, statistic = "Chisq")
 ```
 
 ```{r OR pentavalent Recall + Card}
-class(mics6.ch_p1$penta123_RC)
+class(mics4.ch_p1$penta123_RC)
 
 summ(svyglm(penta1_RC ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_RC ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2616,6 +2619,83 @@ summ(svyglm(penta123_R ~MN2A, design = mics_design_p1, family = quasibinomial())
 summ(svyglm(penta123_R ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
+
+```
+
+
+```{r}
+# Antenatal care seperately in the model
+
+A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1 + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+
+B <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_p1, family = quasibinomial())
+
+C <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+
+D <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_p1, family = quasibinomial())
+
+E <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_p1, family = quasibinomial())
+
+F <- svyglm(penta123_RC ~HH6, design = mics_design_p1, family = quasibinomial())
+
+G <- svyglm(penta123_RC ~ HH6 + windex5 + melevel_r + ethnicity_r, design = mics_design_p1, family = quasibinomial())
+
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+
+C$aic # does not work
+
+
+m <- vcov(C)
+
+mcor <- cov2cor(m)
+
+mcor
+
+ 
+stepAIC(A, direction = 'backward')
+
+class(mics4.ch_p1$HH6)
+# lrtest(B) # does not work for survey weighted models?
+
+psrsq(C, method = "Nagelkerke")
+ 
+psrsq(C, method = "Cox-Snell")
+
+psrsq(C, method = c("Cox-Snell", "Nagelkerke"))
+
+ 
+
+# Compare null model
+
+null <- svyglm(penta123_RC ~ 1, design = mics_design_p1, family = quasibinomial())
+
+# which test is better
+anova(C,null, test="Chisq") 
+
+Anova(B, type = "II", test.statistic = "Wald") 
+
+plot(fitted(B),rstandard(B))
+
+ 
+# Area under curve
+
+prob = predict(B, type=c("response"))
+
+ 
+
+g <- pROC::roc(penta123_RC ~ windex5, data = mics4.ch_p1)
+
+plot(g, print.auc=TRUE)   
+
+B$auc
+
+# best predicted model
+
+BPM <- svyglm(formula = penta123_RC ~ HH6 + windex5 + ethnicity_r + 
+    melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
 
 ```
 
