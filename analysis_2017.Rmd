@@ -348,15 +348,7 @@ mics6.wm %>% count(MN5)
 
 ```
 
-```{r recode categories in independent variables}
 
-
-mics6.ch_wm %>% mutate(ethnicity_r = recode(ethnicity, "9" = 4)) -> mics6.ch_wm
-mics6.ch_wm %>% count(ethnicity_r, ethnicity)
-
-mics6.ch_wm %>% mutate(melevel_r = recode(melevel, "3" = 2, "4" = 2, "5" = 2, "9" = 0)) -> mics6.ch_wm
-mics6.ch_wm %>% count(melevel, melevel_r)
-```
 
 
 ### Subsets
@@ -633,7 +625,15 @@ mics6.ch_b1 %>% count(hepb0_R_24) # 0: 2139 1: 1038
 
 ```
 
+```{r recode categories in independent variables}
 
+mics6.ch_b1 %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics6.ch_b1
+mics6.ch_b1 %>% count(ethnicity_r)
+
+mics6.ch_b1 %>% mutate(melevel_r = recode(melevel, "0" = 0, "1" = 1, "2" = 2, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics6.ch_b1
+mics6.ch_b1 %>% count(melevel, melevel_r)
+
+```
 
 
 
@@ -1769,6 +1769,13 @@ mics6.ch_p1 %>% count(penta123_R)
 
 
 
+```{r recode independent variables}
+mics6.ch_p1 %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(ethnicity_r)
+
+mics6.ch_p1 %>% mutate(melevel_r = recode(melevel, "0" = 0, "1" = 1, "2" = 2, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(melevel, melevel_r)
+```
 
 
 
