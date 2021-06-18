@@ -1061,6 +1061,134 @@ summ(svyglm(hepb0_RC_24 ~MN3_1, design = mics_design_b1, family = quasibinomial(
 
 
 ```
+```{r hepb0 multivariate}
+
+
+full <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_b1, family = quasibinomial())
+
+null <- svyglm(hepb0_RC_2 ~ 1, design = mics_design_b1, family = quasibinomial())
+
+anova(full,null, test="Chisq") 
+
+
+# test correlation between variables 
+m <- vcov(full)
+mcor <- cov2cor(m)
+mcor
+
+stepAIC(full, direction = 'backward')
+
+psrsq(full, method = "Nagelkerke")
+psrsq(full, method = "Cox-Snell")
+psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
+
+# best predicted model
+
+BPM <- svyglm(formula = hepb0_RC_2 ~ HH6 + windex5 + ethnicity_r + 
+    melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
+
+
+# other possible models ANC varied
+
+A <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+B <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_b1, family = quasibinomial())
+
+C <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_b1, family = quasibinomial())
+
+D <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_b1, family = quasibinomial())
+
+E <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_b1, family = quasibinomial())
+
+summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(E, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+
+# other possible models independent variables varied
+
+A <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+B <- svyglm(hepb0_RC_2 ~HH6 + windex5 + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+C <- svyglm(hepb0_RC_2 ~HH6 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+D <- svyglm(hepb0_RC_2 ~ windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+```
+
+```{r hepb0 within 24 hours multivariate}
+
+full <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_b1, family = quasibinomial())
+
+null <- svyglm(hepb0_RC_24 ~ 1, design = mics_design_b1, family = quasibinomial())
+
+anova(full,null, test="Chisq") 
+
+
+# test correlation between variables 
+m <- vcov(full)
+mcor <- cov2cor(m)
+mcor
+
+stepAIC(full, direction = 'backward')
+
+psrsq(full, method = "Nagelkerke")
+psrsq(full, method = "Cox-Snell")
+psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
+
+# best predicted model
+
+BPM <- svyglm(formula = hepb0_RC_24 ~ HH6 + windex5 + ethnicity_r + 
+    melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
+
+
+# other possible models ANC varied
+
+A <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+B <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_b1, family = quasibinomial())
+
+C <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_b1, family = quasibinomial())
+
+D <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_b1, family = quasibinomial())
+
+E <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_b1, family = quasibinomial())
+
+summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(E, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+
+# other possible models independent variables varied
+
+A <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+B <- svyglm(hepb0_RC_24 ~HH6 + windex5 + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+C <- svyglm(hepb0_RC_24 ~HH6 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+D <- svyglm(hepb0_RC_24 ~ windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+
+summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+```
 
 ## Subset: mics4.ch_p1
 
@@ -2681,9 +2809,74 @@ summ(svyglm(penta123_R ~MN3_1, design = mics_design_p1, family = quasibinomial()
 
 
 ```
+```{r multivariate penta123}
 
 
-```{r}
+full <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_p1, family = quasibinomial())
+
+null <- svyglm(penta123_RC ~ 1, design = mics_design_p1, family = quasibinomial())
+
+anova(full,null, test="Chisq") 
+
+
+# test correlation between variables 
+m <- vcov(full)
+mcor <- cov2cor(m)
+mcor
+
+stepAIC(full, direction = 'backward')
+
+psrsq(full, method = "Nagelkerke")
+psrsq(full, method = "Cox-Snell")
+psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
+
+# best predicted model
+
+BPM <- svyglm(formula = penta123_RC ~ HH6 + windex5 + ethnicity_r + 
+    melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
+
+
+# other possible models ANC varied
+
+A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+B <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_p1, family = quasibinomial())
+
+C <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+
+D <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_p1, family = quasibinomial())
+
+E <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_p1, family = quasibinomial())
+
+summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(E, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+
+# other possible models independent variables varied
+
+A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+B <- svyglm(penta123_RC ~HH6 + windex5 + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+C <- svyglm(penta123_RC ~HH6 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+D <- svyglm(penta123_RC ~ windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+
+summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
+
+
+```
+
+
+```{r multivariate penta123}
 # Antenatal care seperately in the model
 
 A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
@@ -2721,7 +2914,7 @@ stepAIC(A, direction = 'backward')
 
 
 class(mics4.ch_p1$HH6)
-# lrtest(B) # does not work for survey weighted models?
+lrtest(B) # does not work for survey weighted models?
 
 psrsq(C, method = "Nagelkerke")
  
@@ -2738,7 +2931,6 @@ null <- svyglm(penta123_RC ~ 1, design = mics_design_p1, family = quasibinomial(
 # which test is better
 anova(C,null, test="Chisq") 
 
-Anova(B, type = "II", test.statistic = "Wald") 
 
 plot(fitted(B),rstandard(B))
 
