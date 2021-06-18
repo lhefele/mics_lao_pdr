@@ -618,12 +618,13 @@ mics6.ch_b1 %>% count(hepb0_RC_2) # 0: 2159 1: 4728
 mics6.ch_b1 %>% count(hepb0_RC_24)# 0: 3682 1: 3205
 mics6.ch_b1 %>% count(hepb0_C_2)  # 0: 807 1: 2903
 mics6.ch_b1 %>% count(hepb0_C_24) # 0: 1543 1: 2167
-mics6.ch_b1 %>% count(hepb0_R_2) # 0: 1352 1: 1825
+mics6.ch_b1 %>% count(hepb0_R_2)  # 0: 1352 1: 1825
 mics6.ch_b1 %>% count(hepb0_R_24) # 0: 2139 1: 1038
 
 
 
 ```
+
 
 ```{r recode categories in independent variables}
 
@@ -2547,6 +2548,7 @@ svychisq(~penta123_C + MN5_1, design = mics_design_p1, statistic = "Chisq")
 
 
 ```
+
 
 ```{r pentavalent R}
 
