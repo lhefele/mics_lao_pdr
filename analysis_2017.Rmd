@@ -111,7 +111,11 @@ mics6.ch %>% count(UF4) # range from 1-20
 
 ```
 
+```{r selecting variables children dataset}
 
+mics6.ch_var <- subset(mics6.ch, select = c("HH1", "HH2", "UF1", "UF2", "UF3", "UF4", "UB2", "CAGE", "CAGED", "HH6", "HH7", "hh7r", "UF7D", "UF7Y", "UF7M", "UB1D", "UB1M", "UB1Y", "IM12A", "IM12B", "IM12C", "IM2", "IM5", "IM11", "IM15", "IM20", "IM21", "IM6H0D", "IM6H0M", "IM6H0Y", "IM6PENTA1D", "IM6PENTA2D", "IM6PENTA3D", "ethnicity", "melevel", "windex5", "HL4", "chweight", "hh6a", "hh6b", "cdisability"))
+
+```
 
 
 ### merging women data to children 
@@ -131,7 +135,7 @@ mics6.wm_var %>% count(UF4, LN) # to check if same
 
 # Merge joining variables from dataset woman to dataset children_2017 using as key variable: UF4 (mothers or caretakers line number in ch.sav).
 # Common variables used to merge are: HH1, HH2, UF4 in children, LN in women
-mics6.ch_wm <- merge(mics6.ch, mics6.wm_var, by=c("HH1", "HH2", "UF4"), all.x = TRUE)
+mics6.ch_wm <- merge(mics6.ch_var, mics6.wm_var, by=c("HH1", "HH2", "UF4"), all.x = TRUE)
 
 
 ```
@@ -379,7 +383,7 @@ mics6.ch_b1 %>% filter(UB2 >= 1) -> mics6.ch_p1
 
 
 
-### New variables in mics.ch_b1
+### New variables in mics6.ch_b1
 
 
 
@@ -734,9 +738,6 @@ mics6.ch_b1 %>% count(UF17) # COMPLETED 11720
 mics6.ch_b1 %>% count(UB2) # Age in years
 mics6.ch_b1 %>% count(CAGE) # Age in months
 mics6.ch_b1 %>% count(CAGED) # Age in days
-mics6.ch_b1 %>% count(CAGE_6) # Age groups
-mics6.ch_b1 %>% count(CAGE_11) # other age grouping
-
 
 
 
