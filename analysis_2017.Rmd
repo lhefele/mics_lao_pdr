@@ -1426,15 +1426,6 @@ mics6.ch_p1 %>% count(penta1_R_1)
 mics6.ch_p1 %>% count(penta1_C_1)
 
 
-# change names
-mics6.ch_p1$penta1_RC <- mics6.ch_p1$penta1_RC_1
-mics6.ch_p1$penta1_R <- mics6.ch_p1$penta1_R_1
-mics6.ch_p1$penta1_C <- mics6.ch_p1$penta1_C_1
-
-mics6.ch_p1 %>% count(penta1_RC)
-mics6.ch_p1 %>% count(penta1_R) 
-mics6.ch_p1 %>% count(penta1_C) 
-
 ```
 
 
@@ -1563,24 +1554,6 @@ mics6.ch_p1 %>%
 mics6.ch_p1 %>% count(penta2_RC_1) # 0: 1734 1: 2806
 mics6.ch_p1 %>% count(penta2_R_1) # 0: 1348 1: 1085
 mics6.ch_p1 %>% count(penta2_C_1) # 0: 386 1: 1721
-
-# new variable penta12 got at least two vaccinations according to card
-mics6.ch_p1 %>% mutate(penta12_C = if_else(penta1_C_1 == 1 & penta2_C_1 == 1, 1, 0)) -> mics6.ch_p1
-mics6.ch_p1 %>% count(penta12_C)
-
-# new variable penta12 got at least two vaccinations according to card or recall
-mics6.ch_p1 %>% mutate(penta12_RC = if_else(penta1_RC_1 == 1 & penta2_RC_1 == 1, 1, 0)) -> mics6.ch_p1
-mics6.ch_p1 %>% count(penta12_RC)
-
-# change names
-mics6.ch_p1$penta12_R <- mics6.ch_p1$penta2_R_1
-
-
-mics6.ch_p1 %>% count(penta12_RC)
-mics6.ch_p1 %>% count(penta12_R) 
-mics6.ch_p1 %>% count(penta12_C) 
-
-
 
 
 
@@ -1714,6 +1687,12 @@ mics6.ch_p1 %>% count(penta3_R_1) # 0: 1571 1: 864
 mics6.ch_p1 %>% count(penta3_C_1) # 0: 443  1: 1662
 
 
+
+
+```
+
+```{r at least penta 1 2 3}
+
 # check if they got all 3 vaccinations, not only second or third. 
 
 
@@ -1723,6 +1702,37 @@ mics6.ch_p1 %>% count(penta1_RC_1, penta2_RC_1, penta3_RC_1)
 mics6.ch_p1 %>% count(penta1_R_1, penta2_R_1, penta3_R_1, penta2_RC, penta3_RC)
 
 
+# new variable penta1 got at least one vaccinations according to card
+mics6.ch_p1 %>% mutate(penta1_C = if_else(penta1_C_1 == 1 | penta2_C_1 == 1 | penta3_C_1 == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta1_C)
+
+# new variable penta1 got at least one vaccinations according to card or recall
+mics6.ch_p1 %>% mutate(penta1_RC = if_else(penta1_RC_1 == 1 | penta2_RC_1 == 1 | penta3_RC_1 == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta1_RC)
+
+# change names
+
+mics6.ch_p1$penta1_R <- mics6.ch_p1$penta1_R_1
+
+mics6.ch_p1 %>% count(penta1_RC)
+mics6.ch_p1 %>% count(penta1_R) 
+mics6.ch_p1 %>% count(penta1_C) 
+
+# new variable penta12 got at least two vaccinations according to card
+mics6.ch_p1 %>% mutate(penta12_C = if_else(penta1_C_1 == 1 & penta2_C_1 == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta12_C)
+
+# new variable penta12 got at least two vaccinations according to card or recall
+mics6.ch_p1 %>% mutate(penta12_RC = if_else(penta1_RC_1 == 1 & penta2_RC_1 == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta12_RC)
+
+# change names
+mics6.ch_p1$penta12_R <- mics6.ch_p1$penta2_R_1
+
+
+mics6.ch_p1 %>% count(penta12_RC)
+mics6.ch_p1 %>% count(penta12_R) 
+mics6.ch_p1 %>% count(penta12_C) 
 
 # new variable penta123 got at least three vaccinations according to card
 mics6.ch_p1 %>% mutate(penta123_C = if_else(penta1_C_1 == 1 & penta2_C_1 == 1 & penta3_C_1 == 1, 1, 0)) -> mics6.ch_p1
@@ -1738,18 +1748,6 @@ mics6.ch_p1$penta123_R <- mics6.ch_p1$penta3_R_1
 mics6.ch_p1 %>% count(penta123_RC)
 mics6.ch_p1 %>% count(penta123_R) 
 mics6.ch_p1 %>% count(penta123_C) 
-
-
-
-
-
-
-
-
-
-```
-
-```{r penta 1 2 3}
 
 
 # card + recall
