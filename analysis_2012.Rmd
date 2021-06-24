@@ -485,17 +485,33 @@ mics4.ch_b1 %>% count(hepb0_R_24) # 0: 3348 1: 375
 
 ```{r recode categories in independent variables}
 
+## I had the same problem as before... needed to change these variables into factors...
 
-mics4.ch_b1 %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_b1
-mics4.ch_b1 %>% count(ethnicity_r)
+mics4.ch_b1$ethnicity <- as.factor(mics4.ch_b1$ethnicity)
+
+
+mics4.ch_b1 %>% 
+  dplyr::mutate(ethnicity_r = dplyr::recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_b1
+
+mics4.ch_b1 %>% count(ethnicity_r, ethnicity)
+
+
+
+
+mics4.ch_b1$melevel <- as.factor(mics4.ch_b1$melevel)
+
 
 mics4.ch_b1 %>% mutate(melevel_r = recode(melevel, "1" = 0, "2" = 1, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics4.ch_b1
+
 mics4.ch_b1 %>% count(melevel, melevel_r)
+
 ```
 
 
 
 ```{r anc}
+
+mics4.ch_b1 %>% count(MN18)
 
 class(mics4.ch_b1$MN18)
 mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
@@ -518,6 +534,8 @@ mics4.ch_b1 %>% count(MN18_1)
 
 mics4.ch_b1 %>% replace_with_na(replace = list(MN18_1 = "9")) -> mics4.ch_b1
 
+# Here is the conversion to NAs
+
 mics4.ch_b1 %>% count(MN18_1)
 
 
@@ -539,6 +557,9 @@ mics4.ch_b1 %>% count(MN1)
 
 
 ```
+
+
+
 
 
 ```{r changing to factor}
@@ -1500,6 +1521,8 @@ mics4.ch_p1 %>% count(IM11, IM12, IM6)
 
 
 # First recode IM12 into penta3_R: recall variable
+
+mics4.ch_p1$IM12 <- as.factor(mics4.ch_p1$IM12)
 
 mics4.ch_p1 %>% count(IM12)
 mics4.ch_p1 %>% 
@@ -2868,6 +2891,69 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 
 ```
+
+
+
+```{r error in stepAIC}
+
+
+full <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_p1, family = quasibinomial())
+
+
+full_step <- stepAIC(full)
+
+
+# is because of the NAs
+
+mics4.ch_p1 %>% count(MN18, MN18_1) # 43 # Place of delivery
+
+mics4.ch_p1 %>% count(MN1) # received ANC yes or no  # 1701 NAs
+
+mics4.ch_p1 %>% count(MN2A)  # This is not a "cleaned" variable! It should be a combination variable that indicates one option (i.e. the doctor) against all other options for the delivery
+#### Way too many NAs -> this is because it is a combination variable
+
+
+
+
+# only MN18_1
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+# only MN1
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+
+
+# only MN2A
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+
+
+# only MN18_1 & MN2A
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1 + MN2A, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+## ERROR
+
+
+# only MN1 & MN2A
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+
+
+mics4.ch_p1 %>% count(MN1, MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
+
+```
+
+
 
 
 ```{r multivariate penta123}
