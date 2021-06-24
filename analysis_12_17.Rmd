@@ -438,6 +438,7 @@ mics4.ch_b1 %>% mutate(year = recode(year, "2011" = 2012, "2012" = 2012)) -> mic
 mics4.ch_b1 %>% count(year)
 
 ```
+
 ```{r anc}
 mics4.ch_b1$ANC <- mics4.ch_b1$MN1
 
@@ -459,7 +460,7 @@ mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
                         "36" = "3",
                         "96" = "3",
                         "98" = "3",
-                        "99" = "9")) -> mics4.ch_b1
+                        "99" = "3")) -> mics4.ch_b1
 mics4.ch_b1 %>% count(MN18, PoB)
 
 
@@ -770,39 +771,6 @@ mics6.ch_wm %>% filter(UB2 < 3) %>% count(IM5_2, IM11)
 ```
 
 
-```{r anc new variables}
-class(mics6.ch_wm$MN20)
-mics6.ch_wm$MN20 <- as.factor(mics6.ch_wm$MN20)
-
-# new variable place of delivery
-mics6.ch_wm %>% mutate(MN20_1 = dplyr::recode(MN20,
-                        "11" = "1",
-                        "12" = "1",
-                        "21" = "2",
-                        "22" = "2",
-                        "26" = "2",
-                        "31" = "3",
-                        "32" = "3",
-                        "33" = "3",
-                        "36" = "3",
-                        "96" = "9",
-                        "98" = "9",
-                        "99" = "9")) -> mics6.ch_wm
-mics6.ch_wm %>% count(MN20)
-mics6.wm %>% count(MN20)
-
-mics6.ch_wm %>% mutate(MN5_1 = if_else(MN5 >= 1 & MN5 <=3, 1,
-                                        if_else(MN5 >= 4 & MN5 <= 6, 2,
-                                        if_else(MN5 == 98|  MN5 == 99 , 9, 3)))) -> mics6.ch_wm
-mics6.ch_wm %>% count(MN5, MN5_1)
-mics6.ch_wm %>% count(MN5)
-mics6.ch_wm %>% count(MN5)
-mics6.wm %>% count(MN5)
-
-# changing variable MN3 into categories
-
-
-```
 
 ### mics6_b1
 
@@ -1096,7 +1064,7 @@ mics6.ch_b1 %>% mutate(PoB = dplyr::recode(MN20,
                         "36" = "3",
                         "96" = "3",
                         "98" = "3",
-                        "99" = "9")) -> mics6.ch_b1
+                        "99" = "3")) -> mics6.ch_b1
 mics6.ch_b1 %>% count(MN20, PoB)
 
 
@@ -1105,8 +1073,6 @@ mics6.ch_b1 %>% mutate(ANC_T = if_else(MN5 >= 1 & MN5 <=3, 1,
                                         if_else(MN5 == 98|  MN5 == 99 , 9, 3)))) -> mics6.ch_b1
 mics6.ch_b1 %>% count(MN5, ANC_T)
 
-mics6.ch_b1 %>% count(MN3A, MN3B, MN2C, MN2F, MN2G, MN2X)
-mics6.ch_b1 %>% count(MN2, MN3A)
 
 
 # changing variable MN3 into categories
@@ -1196,13 +1162,15 @@ mics4_6_b1 %>% count(hepb0_C_2)
 mics4_6_b1 %>% count(hepb0_C_24)
 
 
+
+
 ```
 
 
 ### Survey design b1
 
 
-```{r survey desgin}
+```{r survey design}
 # Make design for hepb0 with selected children aged under 3: n = 13460
 
 mics_design_4_6_b1 <- svydesign(data = mics4_6_b1, 
@@ -1216,54 +1184,54 @@ mics_design_4_6_b1 <- svydesign(data = mics4_6_b1,
 
 ```{r hepb0 independent over years}
 
-summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~HH7R, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~windex5, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~HL4, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ethnicity, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~melevel, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ethnicity_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~melevel_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~PoB, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ANC, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ANC_W, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ANC_T, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~HH7R, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~windex5, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~HL4, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ethnicity, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~melevel, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ethnicity_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~melevel_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~PoB, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ANC, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ANC_W, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ANC_T, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
 # with year as factor and interaction
 
-summ(svyglm(hepb0_RC_2 ~HH6 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~HH6 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~HH7R + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~HH7R + year + HH7R*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~HH7R + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~HH7R + year + HH7R*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~windex5 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~windex5 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~HL4 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~HL4 + year + HL4*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~HL4 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~HL4 + year + HL4*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~melevel + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~melevel + year +melevel*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~melevel + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~melevel + year +melevel*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~ethnicity_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ethnicity_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~melevel_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~melevel_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~PoB  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~PoB + year + PoB*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~PoB  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~PoB + year + PoB*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~ANC  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ANC  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~ANC_W + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ANC_W + year + ANC_W*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ANC_W + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ANC_W + year + ANC_W*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_2 ~ANC_T + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ANC_T + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_2 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
 
@@ -1275,52 +1243,52 @@ summ(svyglm(hepb0_RC_2 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, 
 # hepb0 within 24 hours
 
 #hep0 within 24 hours
-summ(svyglm(hepb0_RC_24 ~HH6, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~HH7R, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~windex5, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~HL4, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ethnicity, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~melevel, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ethnicity_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~melevel_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~PoB, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ANC, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ANC_W, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~HH6, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~HH7R, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~windex5, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~HL4, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ethnicity, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~melevel, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ethnicity_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~melevel_r, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~PoB, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ANC, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ANC_W, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 # with year as factor and interaction
 
-summ(svyglm(hepb0_RC_24 ~HH6 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~HH6 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~HH7R + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~HH7R + year + HH7R*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~HH7R + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~HH7R + year + HH7R*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~windex5 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~windex5 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~HL4 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~HL4 + year + HL4*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~HL4 + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~HL4 + year + HL4*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~melevel + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~melevel + year +melevel*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~melevel + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~melevel + year +melevel*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~ethnicity_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ethnicity_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~melevel_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~melevel_r + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~PoB  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~PoB + year + PoB*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~PoB  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~PoB + year + PoB*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~ANC  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ANC  + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~ANC_W + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ANC_W + year + ANC_W*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ANC_W + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ANC_W + year + ANC_W*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(hepb0_RC_24 ~ANC_T + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ANC_T + year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(hepb0_RC_24 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 ```
 
@@ -1342,12 +1310,29 @@ summ(D,  exp = TRUE, confint = TRUE, digits = 2)
 E <- svyglm(hepb0_RC_2 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial())
 summ(E,  exp = TRUE, confint = TRUE, digits = 2)
 
+F <- svyglm(hepb0_RC_2 ~PoB + year + PoB*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+G <- svyglm(hepb0_RC_2 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+H <- svyglm(hepb0_RC_2 ~ANC_W + year + ANC_W*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+I <- svyglm(hepb0_RC_2 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+
 
 plot_model(A, type = "pred", terms = c("year", "melevel_r"))
 plot_model(B, type = "pred", terms = c("year", "HH6"))
 plot_model(C, type = "pred", terms = c("year", "windex5"))
 plot_model(D, type = "pred", terms = c("year", "melevel"))
 plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
+plot_model(F, type = "pred", terms = c("year", "PoB"))
+plot_model(G, type = "pred", terms = c("year", "ANC"))
+plot_model(H, type = "pred", terms = c("year", "ANC_W"))
+plot_model(I, type = "pred", terms = c("year", "ANC_T"))
 
 
 
@@ -2386,52 +2371,52 @@ mics_design_4_6_p1
 
 #penta123
 
-summ(svyglm(penta123_RC ~HH6, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~HH7R, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~windex5, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~HL4, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ethnicity, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~melevel, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ethnicity_r, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~melevel_r, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~PoB, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ANC, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ANC_W, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~HH6, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~HH7R, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~windex5, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~HL4, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ethnicity, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~melevel, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ethnicity_r, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~melevel_r, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~PoB, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC_W, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 # with year as factor and interaction
 
-summ(svyglm(penta123_RC ~HH6 + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~HH6 + year + HH6*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~HH6 + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~HH6 + year + HH6*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~HH7R + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~HH7R + year + HH7R*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~HH7R + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~HH7R + year + HH7R*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~windex5 + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~windex5 + year + windex5*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~windex5 + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~windex5 + year + windex5*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~HL4 + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~HL4 + year + HL4*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~HL4 + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~HL4 + year + HL4*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~melevel + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~melevel + year +melevel*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~melevel + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~melevel + year +melevel*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~ethnicity_r + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~ethnicity_r + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~melevel_r + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~melevel_r + year + melevel_r*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~melevel_r + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~melevel_r + year + melevel_r*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~PoB  + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~PoB + year + PoB*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~PoB  + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~PoB + year + PoB*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~ANC  + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ANC + year + ANC*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~ANC  + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC + year + ANC*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~ANC_W + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ANC_W + year + ANC_W*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~ANC_W + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC_W + year + ANC_W*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
-summ(svyglm(penta123_RC ~ANC_T + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(penta123_RC ~ANC_T + year + ANC_T*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(penta123_RC ~ANC_T + year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC_T + year + ANC_T*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 ```
 
@@ -2452,12 +2437,30 @@ summ(D,  exp = TRUE, confint = TRUE, digits = 2)
 E <- svyglm(penta123_RC ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_p1, family = quasibinomial())
 summ(E,  exp = TRUE, confint = TRUE, digits = 2)
 
+F <- svyglm(penta123_RC ~PoB + year + PoB*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(F,  exp = TRUE, confint = TRUE, digits = 2)
+
+G <- svyglm(penta123_RC ~ANC + year + ANC*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(G,  exp = TRUE, confint = TRUE, digits = 2)
+
+H <- svyglm(penta123_RC ~ANC_W + year + ANC_W*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(H,  exp = TRUE, confint = TRUE, digits = 2)
+
+I <- svyglm(penta123_RC ~ANC_T + year + ANC_T*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(I,  exp = TRUE, confint = TRUE, digits = 2)
+
+
 
 plot_model(A, type = "pred", terms = c("year", "melevel_r"))
 plot_model(B, type = "pred", terms = c("year", "HH6"))
 plot_model(C, type = "pred", terms = c("year", "windex5"))
 plot_model(D, type = "pred", terms = c("year", "melevel"))
 plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
+plot_model(F, type = "pred", terms = c("year", "PoB"))
+plot_model(G, type = "pred", terms = c("year", "ANC"))
+plot_model(H, type = "pred", terms = c("year", "ANC_W"))
+plot_model(I, type = "pred", terms = c("year", "ANC_T"))
+
 
 
 
