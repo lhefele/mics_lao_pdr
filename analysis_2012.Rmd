@@ -215,41 +215,14 @@ mics4.ch_wm %>% summarize(n_clusters = n_distinct(strata, HH1))
 
 
 ```{r anc}
-class(mics4.ch_wm$MN18)
-mics4.ch_wm$MN18 <- as.factor(mics4.ch_wm$MN18)
-
-# new variable place of delivery
-mics4.ch_wm %>% mutate(MN18_1 = dplyr::recode(MN18,
-                        "11" = "1",
-                        "12" = "1",
-                        "21" = "2",
-                        "22" = "2",
-                        "26" = "2",
-                        "31" = "3",
-                        "32" = "3",
-                        "33" = "3",
-                        "36" = "3",
-                        "96" = "3",
-                        "98" = "3",
-                        "99" = "9")) -> mics4.ch_wm
-mics4.ch_wm %>% count(MN18_1)
 
 
-mics4.ch_wm %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
-                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
-                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_wm
-mics4.ch_wm %>% count(MN3, MN3_1)
-
-mics4.ch_wm %>% count(MN1)
-
-
-# changing variable MN2 into categories
 
 ```
 
 ### Subset
 
-```{r mics4.ch_wm}
+```{r mics4.ch_b1}
 
 #subset children under 3
 mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1 
@@ -258,16 +231,6 @@ mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1
 
 
 ```
-
-
-```{r mics4.ch_p1}
-
-mics4.ch_b1 %>% filter(CAGED > 365) -> mics4.ch_p1
-
-
-```
-
-
 
 
 ## Subset: mics4.ch_b1
@@ -530,6 +493,52 @@ mics4.ch_b1 %>% mutate(melevel_r = recode(melevel, "1" = 0, "2" = 1, "3" = 2, "4
 mics4.ch_b1 %>% count(melevel, melevel_r)
 ```
 
+
+
+```{r anc}
+
+class(mics4.ch_b1$MN18)
+mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
+
+# new variable place of delivery
+mics4.ch_b1 %>% mutate(MN18_1 = dplyr::recode(MN18,
+                        "11" = "1",
+                        "12" = "1",
+                        "21" = "2",
+                        "22" = "2",
+                        "26" = "2",
+                        "31" = "3",
+                        "32" = "3",
+                        "33" = "3",
+                        "36" = "3",
+                        "96" = "3",
+                        "98" = "3",
+                        "99" = "9")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN18_1)
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN18_1 = "9")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% count(MN18_1)
+
+
+
+mics4.ch_b1 %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
+                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
+                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN3, MN3_1)
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN3_1 = "9")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% count(MN3_1)
+
+mics4.ch_b1 %>% count(MN1)
+mics4.ch_b1 %>% replace_with_na(replace = list(MN1 = "9")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% count(MN1)
+
+
+
+```
 
 
 ```{r changing to factor}
@@ -1203,6 +1212,14 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 ## Subset: mics4.ch_p1
 
 
+```{r mics4.ch_p1}
+
+mics4.ch_b1 %>% filter(CAGED > 365) -> mics4.ch_p1
+
+
+```
+
+
 ### New variables
 
 ```{r pentavalent 1}
@@ -1645,67 +1662,11 @@ mics4.ch_p1 %>% count(penta123_C)
 
 ```
 
-```{r recode categories in independent variables}
-
-
-mics4.ch_p1 %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_p1
-mics4.ch_p1 %>% count(ethnicity_r)
-
-mics4.ch_p1 %>% mutate(melevel_r = recode(melevel, "1" = 0, "2" = 1, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics4.ch_p1
-mics4.ch_p1 %>% count(melevel, melevel_r)
-
-# replace with NA "9" in antenatal care
-
-class(mics4.ch_p1$MN18)
-mics4.ch_p1$MN18 <- as.factor(mics4.ch_p1$MN18)
-
-# new variable place of delivery
-mics4.ch_p1 %>% mutate(MN18_1 = dplyr::recode(MN18,
-                        "11" = "1",
-                        "12" = "1",
-                        "21" = "2",
-                        "22" = "2",
-                        "26" = "2",
-                        "31" = "3",
-                        "32" = "3",
-                        "33" = "3",
-                        "36" = "3",
-                        "96" = "3",
-                        "98" = "3",
-                        "99" = "3")) -> mics4.ch_p1
-mics4.ch_p1 %>% count(MN18_1)
-
-
-mics4.ch_p1 %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
-                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
-                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_p1
-mics4.ch_p1 %>% count(MN3_1)
-
-mics4.ch_p1 %>% count(MN1)
-
-
-# changing variable MN2 into categories
-
-
-```
 
 
 ```{r changing to factor}
 # changing variables into factors
 
-# data p1
-mics4.ch_p1$HH7R <- as.factor(mics4.ch_p1$HH7R)
-mics4.ch_p1$HH6 <- as.factor(mics4.ch_p1$HH6)
-mics4.ch_p1$windex5 <- as.factor(mics4.ch_p1$windex5)
-mics4.ch_p1$HL4 <- as.factor(mics4.ch_p1$HL4)
-mics4.ch_p1$ethnicity <- as.factor(mics4.ch_p1$ethnicity)
-mics4.ch_p1$melevel <- as.factor(mics4.ch_p1$melevel)
-mics4.ch_p1$ethnicity_r <- as.factor(mics4.ch_p1$ethnicity_r)
-mics4.ch_p1$melevel_r <- as.factor(mics4.ch_p1$melevel_r)
-mics4.ch_p1$MN18_1 <- as.factor(mics4.ch_p1$MN18_1)
-mics4.ch_p1$MN1 <- as.factor(mics4.ch_p1$MN1)
-mics4.ch_p1$MN2A <- as.factor(mics4.ch_p1$MN2A)
-mics4.ch_p1$MN3_1 <- as.factor(mics4.ch_p1$MN3_1)
 
 mics4.ch_p1$penta1_RC <- as.factor(mics4.ch_p1$penta1_RC)
 mics4.ch_p1$penta12_RC <- as.factor(mics4.ch_p1$penta12_RC)
