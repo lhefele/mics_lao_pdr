@@ -1325,6 +1325,70 @@ summ(svyglm(hepb0_RC_24 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1,
 ```
 
 
+```{r plot interactions hepb0}
+
+
+A <- svyglm(hepb0_RC_2 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial())
+
+B <- svyglm(hepb0_RC_2 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(B,  exp = TRUE, confint = TRUE, digits = 2)
+
+C <- svyglm(hepb0_RC_2 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(C,  exp = TRUE, confint = TRUE, digits = 2)
+
+D <- svyglm(hepb0_RC_2 ~melevel + year +melevel*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(D,  exp = TRUE, confint = TRUE, digits = 2)
+
+E <- svyglm(hepb0_RC_2 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+
+plot_model(A, type = "pred", terms = c("year", "melevel_r"))
+plot_model(B, type = "pred", terms = c("year", "HH6"))
+plot_model(C, type = "pred", terms = c("year", "windex5"))
+plot_model(D, type = "pred", terms = c("year", "melevel"))
+plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
+
+
+
+```
+
+```{r plot interactions hepb0 within 24 hours}
+
+
+A <- svyglm(hepb0_RC_24 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial())
+
+AA <- svyglm(hepb0_RC_24 ~melevel_r + year, design = mics_design_4_6_b1, family = quasibinomial())
+
+B <- svyglm(hepb0_RC_24 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(B,  exp = TRUE, confint = TRUE, digits = 2)
+
+C <- svyglm(hepb0_RC_24 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(C,  exp = TRUE, confint = TRUE, digits = 2)
+
+D <- svyglm(hepb0_RC_24 ~melevel + year +melevel*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(D,  exp = TRUE, confint = TRUE, digits = 2)
+
+E <- svyglm(hepb0_RC_24 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+F <- svyglm(hepb0_RC_24 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(F,  exp = TRUE, confint = TRUE, digits = 2)
+
+
+plot_model(A, type = "pred", terms = c("year", "melevel_r"))
+plot_model(AA, type = "pred", terms = c("year", "melevel_r"))
+
+plot_model(B, type = "pred", terms = c("year", "HH6"))
+plot_model(C, type = "pred", terms = c("year", "windex5"))
+plot_model(D, type = "pred", terms = c("year", "melevel"))
+plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
+plot_model(F, type = "pred", terms = c("year", "ANC"))
+
+
+
+```
+
 # P1
 
 ## mics4 p1
@@ -2370,3 +2434,32 @@ summ(svyglm(penta123_RC ~ANC_T + year, design = mics_design_4_6_p1, family = qua
 summ(svyglm(penta123_RC ~ANC_T + year + ANC_T*year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 
 ```
+
+```{r plot interactions}
+
+
+A <- svyglm(penta123_RC ~melevel_r + year + melevel_r*year, design = mics_design_4_6_p1, family = quasibinomial())
+
+B <- svyglm(penta123_RC ~HH6 + year + HH6*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(B,  exp = TRUE, confint = TRUE, digits = 2)
+
+C <- svyglm(penta123_RC ~windex5 + year + windex5*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(C,  exp = TRUE, confint = TRUE, digits = 2)
+
+D <- svyglm(penta123_RC ~melevel + year +melevel*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(D,  exp = TRUE, confint = TRUE, digits = 2)
+
+E <- svyglm(penta123_RC ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_p1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+
+plot_model(A, type = "pred", terms = c("year", "melevel_r"))
+plot_model(B, type = "pred", terms = c("year", "HH6"))
+plot_model(C, type = "pred", terms = c("year", "windex5"))
+plot_model(D, type = "pred", terms = c("year", "melevel"))
+plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
+
+
+
+```
+
