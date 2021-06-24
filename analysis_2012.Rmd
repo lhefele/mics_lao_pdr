@@ -213,6 +213,7 @@ mics4.ch_wm %>% summarize(n_clusters = n_distinct(strata, HH1))
 
 ```
 
+
 ```{r anc}
 class(mics4.ch_wm$MN18)
 mics4.ch_wm$MN18 <- as.factor(mics4.ch_wm$MN18)
@@ -805,6 +806,7 @@ tab
 
 ### Bivariate analysis - Inference
 
+
 ```{r inference hepb0}
 
 # Looking at association between independent and dependent variables:
@@ -1126,6 +1128,8 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 ```
 
+
+
 ```{r hepb0 within 24 hours multivariate}
 
 full <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_b1, family = quasibinomial())
@@ -1189,6 +1193,12 @@ summ(C, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 ```
+
+
+
+
+
+
 
 ## Subset: mics4.ch_p1
 
@@ -1566,6 +1576,8 @@ mics4.ch_p1 %>% count(penta3_C_1) # 0: 341  1: 1466
 
 
 ```
+
+
 
 ```{r penta 123}
 
@@ -2208,6 +2220,10 @@ svychisq(~penta123_RC + MN3_1, design = mics_design_p1, statistic = "Chisq")
 
 
 ```
+
+
+
+
 ```{r pentavalent C}
 
 ## penta1_C
@@ -2442,6 +2458,8 @@ svychisq(~penta123_C + MN3_1, design = mics_design_p1, statistic = "Chisq")
 
 ```
 
+
+
 ```{r pentavalent R}
 
 ## penta1_R
@@ -2675,6 +2693,8 @@ svychisq(~penta123_R + MN3_1, design = mics_design_p1, statistic = "Chisq")
 
 ```
 
+
+
 ```{r OR pentavalent Recall + Card}
 class(mics4.ch_p1$penta123_RC)
 
@@ -2719,6 +2739,10 @@ summ(svyglm(penta123_RC ~MN3_1, design = mics_design_p1, family = quasibinomial(
 
 
 ```
+
+
+
+
 ```{r OR pentavalent Card}
 
 summ(svyglm(penta1_C ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2764,6 +2788,11 @@ summ(svyglm(penta123_C ~MN3_1, design = mics_design_p1, family = quasibinomial()
 
 
 ```
+
+
+
+
+
 ```{r OR pentavalent Recall}
 
 
@@ -2809,6 +2838,10 @@ summ(svyglm(penta123_R ~MN3_1, design = mics_design_p1, family = quasibinomial()
 
 
 ```
+
+
+
+
 ```{r multivariate penta123}
 
 
