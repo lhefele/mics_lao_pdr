@@ -65,6 +65,8 @@ library(jtools)
 library(MASS)
 
 library(lmtest)
+
+library(WeMix)
 ```
 
 
@@ -95,7 +97,7 @@ sjPlot::view_df(mics4.ch)
 
 ```{r selecting variables children dataset}
 
-mics4.ch_var <- subset(mics4.ch, select = c("HH1", "HH2", "UF6", "UF8Y", "HH6", "HH7", "CAGE", "AG2", "CAGED", "IM1", "IM3H0D", "IM3H0M", "IM3H0Y", "IM3H1D", "IM3H1M", "IM3H1Y", "IM3H2D", "IM3H2M", "IM3H2Y", "IM3H3D", "IM3H3M", "IM3H3Y", "IM5", "IM6", "IM19A", "IM19B", "IM19C", "IM11", "IM12", "IM13", "IM14", "IM15", "AG1D", "AG1M", "AG1Y", "ethnicity", "melevel", "HH7R", "windex5", "HL4", "chweight", "UF11"))
+mics4.ch_var <- subset(mics4.ch, select = c("HH1", "HH2", "UF4", "UF6", "UF8Y", "HH6", "HH7", "CAGE", "AG2", "CAGED", "IM1", "IM3H0D", "IM3H0M", "IM3H0Y", "IM3H1D", "IM3H1M", "IM3H1Y", "IM3H2D", "IM3H2M", "IM3H2Y", "IM3H3D", "IM3H3M", "IM3H3Y", "IM5", "IM6", "IM19A", "IM19B", "IM19C", "IM11", "IM12", "IM13", "IM14", "IM15", "AG1D", "AG1M", "AG1Y", "ethnicity", "melevel", "HH7R", "windex5", "HL4", "chweight", "UF11"))
 
 ```
 
@@ -122,11 +124,6 @@ mics4.ch_wm <- merge(mics4.ch_var, mics4.wm_var, by=c("HH1", "HH2", "UF6"), all.
 # look at lables 
 sjPlot::view_df(mics4.wm_var)
 sjPlot::view_df(mics4.ch_wm)
-
-
-mics4.wm_var%>% count(MN18)
-mics4.ch_wm %>% count(MN18)
-
 
 
 ```
@@ -186,6 +183,29 @@ class(mics4.ch_wm$AG1M_2)
 
 ```
 
+```{r household and child id}
+
+
+# Household ID
+mics4.ch_wm %>% unite(HH_id, c(HH1, HH2), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_wm
+
+
+# households with more than one child
+mics4.ch_wm %>% 
+  filter(AG2 <3) %>% 
+  group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n())# 806
+
+# unique id for each child
+mics4.ch_wm %>% unite(ch_id, c(HH1, HH2, UF4), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_wm
+
+mics4.ch_wm %>% group_by(ch_id) %>% filter(n()>1) %>% summarize(n=n()) # none...
+# identify each child
+
+
+```
+
+
+
 
 ```{r strata}
 
@@ -214,13 +234,21 @@ mics4.ch_wm %>% summarize(n_clusters = n_distinct(strata, HH1))
 ```
 
 
-```{r anc}
+
+```{r recode categories in independent variables}
 
 
+mics4.ch_wm %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_wm
+mics4.ch_wm %>% count(ethnicity_r)
 
+mics4.ch_wm %>% mutate(melevel_r = recode(melevel, "1" = 0, "2" = 1, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics4.ch_wm
+mics4.ch_wm %>% count(melevel, melevel_r)
 ```
 
-### Subset
+
+
+
+### Subsets
 
 ```{r mics4.ch_b1}
 
@@ -233,7 +261,16 @@ mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1
 ```
 
 
-## Subset: mics4.ch_b1
+
+
+```{r mics4.ch_p1}
+
+mics4.ch_b1 %>% filter(CAGED > 365) -> mics4.ch_p1
+
+
+```
+
+## mics4_b1
 
 
 ### New variables
@@ -483,25 +520,40 @@ mics4.ch_b1 %>% count(hepb0_R_24) # 0: 3348 1: 375
 ```
 
 
-```{r recode categories in independent variables}
+```{r anc replace 9 with na}
+
+mics4.ch_b1 %>% count(MN18)
+
+mics4.ch_b1 %>% count(MN3)
+
+mics4.ch_b1 %>% count(MN1)
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN18 = "99")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN3 = "99")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN1 = "9")) -> mics4.ch_b1
 
 
-mics4.ch_b1 %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_b1
-mics4.ch_b1 %>% count(ethnicity_r)
+mics4.ch_b1 %>% count(MN18)
 
-mics4.ch_b1 %>% mutate(melevel_r = recode(melevel, "1" = 0, "2" = 1, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics4.ch_b1
-mics4.ch_b1 %>% count(melevel, melevel_r)
+mics4.ch_b1 %>% count(MN3)
+
+mics4.ch_b1 %>% count(MN1)
+
 ```
-
-
 
 ```{r anc}
 
-class(mics4.ch_b1$MN18)
-mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
+mics4.ch_b1$ANC <- mics4.ch_b1$MN1
+
+mics4.ch_b1 %>% mutate(ANC = recode(ANC,
+                                     "1" = 1,
+                                     "2" = 0
+                                     )) -> mics4.ch_b1
 
 # new variable place of delivery
-mics4.ch_b1 %>% mutate(MN18_1 = dplyr::recode(MN18,
+mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
                         "11" = "1",
                         "12" = "1",
                         "21" = "2",
@@ -511,34 +563,46 @@ mics4.ch_b1 %>% mutate(MN18_1 = dplyr::recode(MN18,
                         "32" = "3",
                         "33" = "3",
                         "36" = "3",
-                        "96" = "3",
-                        "98" = "3",
-                        "99" = "9")) -> mics4.ch_b1
-mics4.ch_b1 %>% count(MN18_1)
-
-mics4.ch_b1 %>% replace_with_na(replace = list(MN18_1 = "9")) -> mics4.ch_b1
-
-mics4.ch_b1 %>% count(MN18_1)
+                        "96" = "3"
+                        )) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN18, PoB)
 
 
+mics4.ch_b1 %>% mutate(ANC_T = if_else(MN3 >= 1 & MN3 <=3 | MN3 == 98, 1,
+                                        if_else(MN3 >= 4 & MN3 <= 6, 2, 3
+                                       ))) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN3, ANC_T)
 
-mics4.ch_b1 %>% mutate(MN3_1 = if_else(MN3 >= 1 & MN3 <=3, 1,
-                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
-                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_b1
-mics4.ch_b1 %>% count(MN3, MN3_1)
+mics4.ch_b1 %>% count(MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
+mics4.ch_b1 %>% count(MN1, MN2A)
 
-mics4.ch_b1 %>% replace_with_na(replace = list(MN3_1 = "9")) -> mics4.ch_b1
 
-mics4.ch_b1 %>% count(MN3_1)
+# changing variable MN2 into categories
 
-mics4.ch_b1 %>% count(MN1)
-mics4.ch_b1 %>% replace_with_na(replace = list(MN1 = "9")) -> mics4.ch_b1
+mics4.ch_b1 %>% count(MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
+mics4.ch_b1 %>% count(MN1, MN2A)
 
-mics4.ch_b1 %>% count(MN1)
+mics4.ch_b1 %>% 
+  unite(ANC_W, c(MN1, MN2A, MN2B), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_b1
 
+mics4.ch_b1 %>% replace_with_na(replace = list(ANC_W = "NA_NA_NA")) -> mics4.ch_b1
+mics4.ch_b1 %>% replace_with_na(replace = list(ANC_W = "NA__")) -> mics4.ch_b1
+
+
+mics4.ch_b1 %>% mutate(ANC_W = recode(ANC_W,
+                                     "1_?_?" = 3,
+                                     "1__" = 3,
+                                     "1__B" = 2,
+                                     "1_A_" = 1,
+                                     "1_A_B" = 1,
+                                     "2__" = 0,
+                                     "9__" = 0)) -> mics4.ch_b1
+mics4.ch_b1 %>% count(ANC_W)
 
 
 ```
+
+
 
 
 ```{r changing to factor}
@@ -553,10 +617,10 @@ mics4.ch_b1$ethnicity <- as.factor(mics4.ch_b1$ethnicity)
 mics4.ch_b1$melevel <- as.factor(mics4.ch_b1$melevel)
 mics4.ch_b1$ethnicity_r <- as.factor(mics4.ch_b1$ethnicity_r)
 mics4.ch_b1$melevel_r <- as.factor(mics4.ch_b1$melevel_r)
-mics4.ch_b1$MN18_1 <- as.factor(mics4.ch_b1$MN18_1)
-mics4.ch_b1$MN1 <- as.factor(mics4.ch_b1$MN1)
-mics4.ch_b1$MN2A <- as.factor(mics4.ch_b1$MN2A)
-mics4.ch_b1$MN3_1 <- as.factor(mics4.ch_b1$MN3_1)
+mics4.ch_b1$PoB <- as.factor(mics4.ch_b1$PoB)
+mics4.ch_b1$ANC <- as.factor(mics4.ch_b1$ANC)
+mics4.ch_b1$ANC_W <- as.factor(mics4.ch_b1$ANC_W)
+mics4.ch_b1$ANC_T <- as.factor(mics4.ch_b1$ANC_T)
 
 mics4.ch_b1$hepb0_RC_2 <- as.factor(mics4.ch_b1$hepb0_RC_2)
 mics4.ch_b1$hepb0_RC_24 <- as.factor(mics4.ch_b1$hepb0_RC_24)
@@ -576,7 +640,7 @@ mics4.ch_b1$hepb0_R_24 <- as.factor(mics4.ch_b1$hepb0_R_24)
 ### Survey design b1
 
 
-```{r survey desgin}
+```{r survey design}
 # Make design for hepb0 with selected children aged under 3: n = 6573
 
 mics_design_b1 <- svydesign(data = mics4.ch_b1, 
@@ -711,61 +775,37 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = AG2)) +
 
 
 ```{r anc}
-# place of delivery: MN18
-mics4.ch_b1 %>% count(MN18_1)
-tab <- svytable(~MN18_1, design = mics_design_b1) %>% 
+# place of delivery: PoB
+mics4.ch_b1 %>% count(PoB)
+tab <- svytable(~PoB, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
 
-# received antenatal care: MN1
-tab <- svytable(~MN1, design = mics_design_b1) %>% 
+# received antenatal care: ANC
+tab <- svytable(~ANC, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
 
 # times received antenatal care: MN3
-tab <- svytable(~MN3_1, design = mics_design_b1) %>% 
+tab <- svytable(~ANC_T, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
 
 # antenatal care provider MN2
-mics4.ch_b1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2X)
+mics4.ch_b1 %>% count(ANC_W)
 
-tab <- svytable(~MN2A, design = mics_design_b1) %>% 
+tab <- svytable(~ANC_W, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
-tab <- svytable(~MN2B, design = mics_design_b1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
-tab <- svytable(~MN2C, design = mics_design_b1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
-tab <- svytable(~MN2F, design = mics_design_b1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
-tab <- svytable(~MN2G, design = mics_design_b1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
-tab <- svytable(~MN2X, design = mics_design_b1) %>% 
-  as.data.frame() %>% 
-  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
-  mutate(Total = sum(Freq)) 
-tab
+
 
 ```
 
@@ -819,7 +859,7 @@ tab
 ```{r inference hepb0}
 
 # Looking at association between independent and dependent variables:
-# HH7R, HH6, windex5, HL4, ethnicity, melevel, MN18_1, MN1, MN2, MN3_1
+# HH7R, HH6, windex5, HL4, ethnicity, melevel, PoB, ANC, MN2, ANC_T
 # Using design b1: first combination card and recall variable: hepb0_RC_2, hepb0_RC_24
 
 
@@ -862,28 +902,28 @@ tab
 ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_2 + MN18_1, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_2 + PoB, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_2 + MN1, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_2 + ANC, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_2 + MN2A, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_2 + ANC_W, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_2 + MN3_1, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_2 + ANC_T, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 
@@ -925,28 +965,28 @@ tab
 ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_24 + MN18_1, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_24 + PoB, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_24 + MN1, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_24 + ANC, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_24 + MN2A, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_24 + ANC_W, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_24 + MN3_1, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_24 + ANC_T, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=hepb0_RC_24, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 
@@ -959,10 +999,10 @@ svychisq(~hepb0_RC_2 + windex5, design = mics_design_b1, statistic = "Chisq")
 svychisq(~hepb0_RC_2 + HL4, design = mics_design_b1, statistic = "Chisq") #ns
 svychisq(~hepb0_RC_2 + ethnicity, design = mics_design_b1, statistic = "Chisq") 
 svychisq(~hepb0_RC_2 + melevel, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_2 + MN18_1, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_2 + MN1, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_2 + MN2A, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_2 + MN3_1, design = mics_design_b1, statistic = "Chisq")
+svychisq(~hepb0_RC_2 + PoB, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + ANC, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + ANC_W, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_2 + ANC_T, design = mics_design_b1, statistic = "Chisq")
 
 # H0: hepb0 coverage within 24 hours not associated with independent variables
 # H1: hepb0 coverage within 24 hours associated with independent variables
@@ -972,10 +1012,10 @@ svychisq(~hepb0_RC_24 + windex5, design = mics_design_b1, statistic = "Chisq")
 svychisq(~hepb0_RC_24 + HL4, design = mics_design_b1, statistic = "Chisq") # ns
 svychisq(~hepb0_RC_24 + ethnicity, design = mics_design_b1, statistic = "Chisq") 
 svychisq(~hepb0_RC_24 + melevel, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_24 + MN18_1, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_24 + MN1, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_24 + MN2A, design = mics_design_b1, statistic = "Chisq") 
-svychisq(~hepb0_RC_24 + MN3_1, design = mics_design_b1, statistic = "Chisq")
+svychisq(~hepb0_RC_24 + PoB, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + ANC, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + ANC_W, design = mics_design_b1, statistic = "Chisq") 
+svychisq(~hepb0_RC_24 + ANC_T, design = mics_design_b1, statistic = "Chisq")
 
 
 
@@ -1051,10 +1091,10 @@ summ(svyglm(hepb0_RC_2 ~ethnicity, design = mics_design_b1, family = quasibinomi
 summ(svyglm(hepb0_RC_2 ~melevel, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 summ(svyglm(hepb0_RC_2 ~ethnicity_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 summ(svyglm(hepb0_RC_2 ~melevel_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~MN18_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~MN1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~MN2A, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_2 ~MN3_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~PoB, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ANC, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ANC_W, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_2 ~ANC_T, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 
 #hep0 within 24 hours
 summ(svyglm(hepb0_RC_24 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
@@ -1065,17 +1105,20 @@ summ(svyglm(hepb0_RC_24 ~ethnicity, design = mics_design_b1, family = quasibinom
 summ(svyglm(hepb0_RC_24 ~melevel, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 summ(svyglm(hepb0_RC_24 ~ethnicity_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 summ(svyglm(hepb0_RC_24 ~melevel_r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~MN18_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~MN1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~MN2A, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
-summ(svyglm(hepb0_RC_24 ~MN3_1, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~PoB, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ANC, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ANC_W, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~ANC_T, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 
 
 ```
+
+### Multivariate analysis
+
 ```{r hepb0 multivariate}
 
 
-full <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_b1, family = quasibinomial())
+full <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W + PoB + HL4 + HH7R, design = mics_design_b1, family = quasibinomial())
 
 null <- svyglm(hepb0_RC_2 ~ 1, design = mics_design_b1, family = quasibinomial())
 
@@ -1087,7 +1130,7 @@ m <- vcov(full)
 mcor <- cov2cor(m)
 mcor
 
-stepAIC(full, direction = 'backward')
+stepAIC(full)
 
 psrsq(full, method = "Nagelkerke")
 psrsq(full, method = "Cox-Snell")
@@ -1096,22 +1139,22 @@ psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 # best predicted model
 
 BPM <- svyglm(formula = hepb0_RC_2 ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+    melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
 summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
 
 
 # other possible models ANC varied
 
-A <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+A <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-B <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_b1, family = quasibinomial())
+B <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_T, design = mics_design_b1, family = quasibinomial())
 
-C <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_b1, family = quasibinomial())
+C <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W, design = mics_design_b1, family = quasibinomial())
 
-D <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_b1, family = quasibinomial())
+D <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + PoB, design = mics_design_b1, family = quasibinomial())
 
-E <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_b1, family = quasibinomial())
+E <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_W, design = mics_design_b1, family = quasibinomial())
 
 summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
@@ -1122,13 +1165,13 @@ summ(E, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 # other possible models independent variables varied
 
-A <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + MN1, design = mics_design_b1, family = quasibinomial())
+A <- svyglm(hepb0_RC_2 ~HH6 + windex5 + ethnicity_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-B <- svyglm(hepb0_RC_2 ~HH6 + windex5 + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+B <- svyglm(hepb0_RC_2 ~HH6 + windex5 + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-C <- svyglm(hepb0_RC_2 ~HH6 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+C <- svyglm(hepb0_RC_2 ~HH6 + ethnicity_r + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-D <- svyglm(hepb0_RC_2 ~ windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+D <- svyglm(hepb0_RC_2 ~ windex5 + ethnicity_r + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
 summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
@@ -1141,7 +1184,7 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 ```{r hepb0 within 24 hours multivariate}
 
-full <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_b1, family = quasibinomial())
+full <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W + PoB + HL4 + HH7R, design = mics_design_b1, family = quasibinomial())
 
 null <- svyglm(hepb0_RC_24 ~ 1, design = mics_design_b1, family = quasibinomial())
 
@@ -1162,22 +1205,22 @@ psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 # best predicted model
 
 BPM <- svyglm(formula = hepb0_RC_24 ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+    melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
 summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
 
 
 # other possible models ANC varied
 
-A <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+A <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-B <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_b1, family = quasibinomial())
+B <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_T, design = mics_design_b1, family = quasibinomial())
 
-C <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_b1, family = quasibinomial())
+C <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W, design = mics_design_b1, family = quasibinomial())
 
-D <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_b1, family = quasibinomial())
+D <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + PoB, design = mics_design_b1, family = quasibinomial())
 
-E <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_b1, family = quasibinomial())
+E <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_W, design = mics_design_b1, family = quasibinomial())
 
 summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
@@ -1188,13 +1231,13 @@ summ(E, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 # other possible models independent variables varied
 
-A <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + MN1, design = mics_design_b1, family = quasibinomial())
+A <- svyglm(hepb0_RC_24 ~HH6 + windex5 + ethnicity_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-B <- svyglm(hepb0_RC_24 ~HH6 + windex5 + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+B <- svyglm(hepb0_RC_24 ~HH6 + windex5 + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-C <- svyglm(hepb0_RC_24 ~HH6 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+C <- svyglm(hepb0_RC_24 ~HH6 + ethnicity_r + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
-D <- svyglm(hepb0_RC_24 ~ windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_b1, family = quasibinomial())
+D <- svyglm(hepb0_RC_24 ~ windex5 + ethnicity_r + melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
 
 summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
@@ -1203,21 +1246,19 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 ```
 
+```{r mixed model}
 
-
-
-
-
-
-## Subset: mics4.ch_p1
-
-
-```{r mics4.ch_p1}
-
-mics4.ch_b1 %>% filter(CAGED > 365) -> mics4.ch_p1
-
+#bi_1 <- mix(hepb0_RC_2 ~ HH6 + (1|HH_id),data=mics4.ch_b1,
+#family=binomial(link="logit"),verbose=FALSE,
+#weights=c("chweight"),nQuad=13)
 
 ```
+
+
+
+
+## mics4_p1
+
 
 
 ### New variables
@@ -1662,10 +1703,104 @@ mics4.ch_p1 %>% count(penta123_C)
 
 ```
 
+```{r anc replace 9 with na}
+
+mics4.ch_p1 %>% count(MN18)
+
+mics4.ch_p1 %>% count(MN3)
+
+mics4.ch_p1 %>% count(MN1)
+
+mics4.ch_p1 %>% replace_with_na(replace = list(MN18 = "99")) -> mics4.ch_p1
+
+mics4.ch_p1 %>% replace_with_na(replace = list(MN3 = "99")) -> mics4.ch_p1
+
+mics4.ch_p1 %>% replace_with_na(replace = list(MN1 = "9")) -> mics4.ch_p1
+
+
+mics4.ch_p1 %>% count(MN18)
+
+mics4.ch_p1 %>% count(MN3)
+
+mics4.ch_p1 %>% count(MN1)
+
+```
+
+```{r anc}
+
+mics4.ch_p1$ANC <- mics4.ch_p1$MN1
+
+mics4.ch_p1 %>% mutate(ANC = recode(ANC,
+                                     "1" = 1,
+                                     "2" = 0
+                                     )) -> mics4.ch_p1
+
+# new variable place of delivery
+mics4.ch_p1 %>% mutate(PoB = dplyr::recode(MN18,
+                        "11" = "1",
+                        "12" = "1",
+                        "21" = "2",
+                        "22" = "2",
+                        "26" = "2",
+                        "31" = "3",
+                        "32" = "3",
+                        "33" = "3",
+                        "36" = "3",
+                        "96" = "3"
+                        )) -> mics4.ch_p1
+mics4.ch_p1 %>% count(MN18, PoB)
+
+
+mics4.ch_p1 %>% mutate(ANC_T = if_else(MN3 >= 1 & MN3 <=3 | MN3 == 98, 1,
+                                        if_else(MN3 >= 4 & MN3 <= 6, 2, 3
+                                       ))) -> mics4.ch_p1
+mics4.ch_p1 %>% count(MN3, ANC_T)
+
+mics4.ch_p1 %>% count(MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
+mics4.ch_p1 %>% count(MN1, MN2A)
+
+
+# changing variable MN2 into categories
+
+mics4.ch_p1 %>% count(MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
+mics4.ch_p1 %>% count(MN1, MN2A)
+
+mics4.ch_p1 %>% 
+  unite(ANC_W, c(MN1, MN2A, MN2B), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_p1
+
+mics4.ch_p1 %>% replace_with_na(replace = list(ANC_W = "NA_NA_NA")) -> mics4.ch_p1
+mics4.ch_p1 %>% replace_with_na(replace = list(ANC_W = "NA__")) -> mics4.ch_p1
+
+
+mics4.ch_p1 %>% mutate(ANC_W = recode(ANC_W,
+                                     "1_?_?" = 3,
+                                     "1__" = 3,
+                                     "1__B" = 2,
+                                     "1_A_" = 1,
+                                     "1_A_B" = 1,
+                                     "2__" = 0,
+                                     "9__" = 0)) -> mics4.ch_p1
+mics4.ch_p1 %>% count(ANC_W)
+
+
+```
 
 
 ```{r changing to factor}
 # changing variables into factors
+
+mics4.ch_p1$HH7R <- as.factor(mics4.ch_p1$HH7R)
+mics4.ch_p1$HH6 <- as.factor(mics4.ch_p1$HH6)
+mics4.ch_p1$windex5 <- as.factor(mics4.ch_p1$windex5)
+mics4.ch_p1$HL4 <- as.factor(mics4.ch_p1$HL4)
+mics4.ch_p1$ethnicity <- as.factor(mics4.ch_p1$ethnicity)
+mics4.ch_p1$melevel <- as.factor(mics4.ch_p1$melevel)
+mics4.ch_p1$ethnicity_r <- as.factor(mics4.ch_p1$ethnicity_r)
+mics4.ch_p1$melevel_r <- as.factor(mics4.ch_p1$melevel_r)
+mics4.ch_p1$PoB <- as.factor(mics4.ch_p1$PoB)
+mics4.ch_p1$ANC <- as.factor(mics4.ch_p1$ANC)
+mics4.ch_p1$ANC_W <- as.factor(mics4.ch_p1$ANC_W)
+mics4.ch_p1$ANC_T <- as.factor(mics4.ch_p1$ANC_T)
 
 
 mics4.ch_p1$penta1_RC <- as.factor(mics4.ch_p1$penta1_RC)
@@ -1823,32 +1958,32 @@ ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = AG2)) +
 
 
 ```{r anc}
-# place of delivery: MN18
-mics4.ch_p1 %>% count(MN18_1)
-tab <- svytable(~MN18_1, design = mics_design_p1) %>% 
+# place of delivery: ANC8
+mics4.ch_p1 %>% count(PoB)
+tab <- svytable(~PoB, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
 
-# received antenatal care: MN1
-tab <- svytable(~MN1, design = mics_design_p1) %>% 
+# received antenatal care: ANC
+tab <- svytable(~ANC, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
 
 # times received antenatal care: MN3
-tab <- svytable(~MN3_1, design = mics_design_p1) %>% 
+tab <- svytable(~ANC_T, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
 tab
 
 # antenatal care provider MN2
-mics4.ch_b1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2X)
+mics4.ch_b1 %>% count(ANC_W, MN2B, MN2C,MN2F, MN2G, MN2X)
 
-tab <- svytable(~MN2A, design = mics_design_p1) %>% 
+tab <- svytable(~ANC_W, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
@@ -1986,28 +2121,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_RC + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta1_RC + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_RC + MN1, design = mics_design_p1) -> tab
+svytable(~penta1_RC + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_RC + MN2A, design = mics_design_p1) -> tab
+svytable(~penta1_RC + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_RC + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta1_RC + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta1_RC, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta1 coverage not associated with independent variables
@@ -2018,10 +2153,10 @@ svychisq(~penta1_RC + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta1_RC + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta1_RC + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta1_RC + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_RC + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_RC + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_RC + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_RC + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta1_RC + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_RC + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2063,28 +2198,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_RC + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta12_RC + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_RC + MN1, design = mics_design_p1) -> tab
+svytable(~penta12_RC + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_RC + MN2A, design = mics_design_p1) -> tab
+svytable(~penta12_RC + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_RC + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta12_RC + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta12_RC, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta2 coverage not associated with independent variables
@@ -2095,10 +2230,10 @@ svychisq(~penta12_RC + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta12_RC + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta12_RC + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta12_RC + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_RC + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_RC + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_RC + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_RC + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta12_RC + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_RC + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_RC + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_RC + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2140,28 +2275,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_RC + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta123_RC + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_RC + MN1, design = mics_design_p1) -> tab
+svytable(~penta123_RC + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_RC + MN2A, design = mics_design_p1) -> tab
+svytable(~penta123_RC + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_RC + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta123_RC + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta123_RC, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta3 coverage not associated with independent variables
@@ -2172,10 +2307,10 @@ svychisq(~penta123_RC + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta123_RC + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta123_RC + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta123_RC + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_RC + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_RC + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_RC + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_RC + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta123_RC + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_RC + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_RC + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_RC + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2225,28 +2360,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_C + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta1_C + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_C + MN1, design = mics_design_p1) -> tab
+svytable(~penta1_C + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_C + MN2A, design = mics_design_p1) -> tab
+svytable(~penta1_C + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_C + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta1_C + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta1_C, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta1 coverage not associated with independent variables
@@ -2257,10 +2392,10 @@ svychisq(~penta1_C + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta1_C + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta1_C + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta1_C + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_C + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_C + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_C + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_C + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta1_C + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_C + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_C + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_C + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2302,28 +2437,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_C + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta12_C + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_C + MN1, design = mics_design_p1) -> tab
+svytable(~penta12_C + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_C + MN2A, design = mics_design_p1) -> tab
+svytable(~penta12_C + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_C + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta12_C + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta12_C, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta2 coverage not associated with independent variables
@@ -2334,10 +2469,10 @@ svychisq(~penta12_C + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta12_C + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta12_C + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta12_C + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_C + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_C + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_C + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_C + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta12_C + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_C + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_C + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_C + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2379,28 +2514,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_C + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta123_C + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_C + MN1, design = mics_design_p1) -> tab
+svytable(~penta123_C + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_C + MN2A, design = mics_design_p1) -> tab
+svytable(~penta123_C + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_C + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta123_C + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta123_C, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta3 coverage not associated with independent variables
@@ -2411,10 +2546,10 @@ svychisq(~penta123_C + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta123_C + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta123_C + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta123_C + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_C + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_C + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_C + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_C + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta123_C + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_C + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_C + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_C + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 ```
@@ -2461,28 +2596,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_R + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta1_R + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_R + MN1, design = mics_design_p1) -> tab
+svytable(~penta1_R + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_R + MN2A, design = mics_design_p1) -> tab
+svytable(~penta1_R + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta1_R + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta1_R + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta1_R, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta1 coverage not associated with independent variables
@@ -2493,10 +2628,10 @@ svychisq(~penta1_R + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta1_R + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta1_R + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta1_R + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_R + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_R + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_R + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta1_R + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta1_R + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_R + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_R + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta1_R + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2538,28 +2673,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_R + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta12_R + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_R + MN1, design = mics_design_p1) -> tab
+svytable(~penta12_R + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_R + MN2A, design = mics_design_p1) -> tab
+svytable(~penta12_R + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta12_R + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta12_R + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta12_R, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta2 coverage not associated with independent variables
@@ -2570,10 +2705,10 @@ svychisq(~penta12_R + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta12_R + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta12_R + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta12_R + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_R + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_R + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_R + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta12_R + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta12_R + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_R + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_R + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta12_R + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 
 
@@ -2615,28 +2750,28 @@ tab
 ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = melevel)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_R + MN18_1, design = mics_design_p1) -> tab
+svytable(~penta123_R + PoB, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = MN18_1)) +
+ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_R + MN1, design = mics_design_p1) -> tab
+svytable(~penta123_R + ANC, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = MN1)) +
+ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = ANC)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_R + MN2A, design = mics_design_p1) -> tab
+svytable(~penta123_R + ANC_W, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = MN2A)) +
+ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = ANC_W)) +
   geom_col(position = "fill") 
 
-svytable(~penta123_R + MN3_1, design = mics_design_p1) -> tab
+svytable(~penta123_R + ANC_T, design = mics_design_p1) -> tab
 tab <- as.data.frame(tab)
 tab
-ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = MN3_1)) +
+ggplot(data = tab, mapping = aes(x=penta123_R, y=Freq, fill = ANC_T)) +
   geom_col(position = "fill") 
 
 # H0: penta3 coverage not associated with independent variables
@@ -2647,10 +2782,10 @@ svychisq(~penta123_R + windex5, design = mics_design_p1, statistic = "Chisq")
 svychisq(~penta123_R + HL4, design = mics_design_p1, statistic = "Chisq") #ns
 svychisq(~penta123_R + ethnicity, design = mics_design_p1, statistic = "Chisq") 
 svychisq(~penta123_R + melevel, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_R + MN18_1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_R + MN1, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_R + MN2A, design = mics_design_p1, statistic = "Chisq") 
-svychisq(~penta123_R + MN3_1, design = mics_design_p1, statistic = "Chisq")
+svychisq(~penta123_R + PoB, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_R + ANC, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_R + ANC_W, design = mics_design_p1, statistic = "Chisq") 
+svychisq(~penta123_R + ANC_T, design = mics_design_p1, statistic = "Chisq")
 
 ```
 
@@ -2667,10 +2802,10 @@ summ(svyglm(penta1_RC ~ethnicity, design = mics_design_p1, family = quasibinomia
 summ(svyglm(penta1_RC ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_RC ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_RC ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_RC ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_RC ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_RC ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_RC ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_RC ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_RC ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_RC ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_RC ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 summ(svyglm(penta12_RC ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_RC ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2680,10 +2815,10 @@ summ(svyglm(penta12_RC ~ethnicity, design = mics_design_p1, family = quasibinomi
 summ(svyglm(penta12_RC ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_RC ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_RC ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_RC ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_RC ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_RC ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_RC ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_RC ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_RC ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_RC ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_RC ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 summ(svyglm(penta123_RC ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_RC ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2693,10 +2828,10 @@ summ(svyglm(penta123_RC ~ethnicity, design = mics_design_p1, family = quasibinom
 summ(svyglm(penta123_RC ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_RC ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_RC ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_RC ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_RC ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_RC ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_RC ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_RC ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
 ```
@@ -2714,10 +2849,10 @@ summ(svyglm(penta1_C ~ethnicity, design = mics_design_p1, family = quasibinomial
 summ(svyglm(penta1_C ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_C ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_C ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_C ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_C ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_C ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_C ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_C ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_C ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_C ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_C ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 summ(svyglm(penta12_C ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_C ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2727,10 +2862,10 @@ summ(svyglm(penta12_C ~ethnicity, design = mics_design_p1, family = quasibinomia
 summ(svyglm(penta12_C ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_C ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_C ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_C ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_C ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_C ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_C ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_C ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_C ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_C ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_C ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 summ(svyglm(penta123_C ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_C ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2740,10 +2875,10 @@ summ(svyglm(penta123_C ~ethnicity, design = mics_design_p1, family = quasibinomi
 summ(svyglm(penta123_C ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_C ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_C ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_C ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_C ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_C ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_C ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_C ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_C ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_C ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_C ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
 
@@ -2765,10 +2900,10 @@ summ(svyglm(penta1_R ~ethnicity, design = mics_design_p1, family = quasibinomial
 summ(svyglm(penta1_R ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_R ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta1_R ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_R ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_R ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_R ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta1_R ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_R ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_R ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_R ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta1_R ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 summ(svyglm(penta12_R ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_R ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2778,10 +2913,10 @@ summ(svyglm(penta12_R ~ethnicity, design = mics_design_p1, family = quasibinomia
 summ(svyglm(penta12_R ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_R ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta12_R ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_R ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_R ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_R ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta12_R ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_R ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_R ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_R ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta12_R ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 summ(svyglm(penta123_R ~HH6, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_R ~HH7R, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -2791,10 +2926,10 @@ summ(svyglm(penta123_R ~ethnicity, design = mics_design_p1, family = quasibinomi
 summ(svyglm(penta123_R ~melevel, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_R ~ethnicity_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_R ~melevel_r, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_R ~MN18_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_R ~MN1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_R ~MN2A, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
-summ(svyglm(penta123_R ~MN3_1, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_R ~PoB, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_R ~ANC, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_R ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+summ(svyglm(penta123_R ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
 
 
@@ -2806,7 +2941,7 @@ summ(svyglm(penta123_R ~MN3_1, design = mics_design_p1, family = quasibinomial()
 ```{r multivariate penta123}
 
 
-full <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_p1, family = quasibinomial())
+full <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + HL4 + HH7R +PoB, design = mics_design_p1, family = quasibinomial())
 
 null <- svyglm(penta123_RC ~ 1, design = mics_design_p1, family = quasibinomial())
 
@@ -2827,22 +2962,22 @@ psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 # best predicted model
 
 BPM <- svyglm(formula = penta123_RC ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+    melevel_r + ANC, design = mics_design_p1, family = quasibinomial())
 
 summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
 
 
 # other possible models ANC varied
 
-A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC, design = mics_design_p1, family = quasibinomial())
 
-B <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_p1, family = quasibinomial())
+B <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_T, design = mics_design_p1, family = quasibinomial())
 
-C <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+C <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W, design = mics_design_p1, family = quasibinomial())
 
-D <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_p1, family = quasibinomial())
+D <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + PoB, design = mics_design_p1, family = quasibinomial())
 
-E <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_p1, family = quasibinomial())
+E <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_W, design = mics_design_p1, family = quasibinomial())
 
 summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
@@ -2853,13 +2988,13 @@ summ(E, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 # other possible models independent variables varied
 
-A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + MN1, design = mics_design_p1, family = quasibinomial())
+A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + ANC, design = mics_design_p1, family = quasibinomial())
 
-B <- svyglm(penta123_RC ~HH6 + windex5 + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+B <- svyglm(penta123_RC ~HH6 + windex5 + melevel_r + ANC, design = mics_design_p1, family = quasibinomial())
 
-C <- svyglm(penta123_RC ~HH6 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+C <- svyglm(penta123_RC ~HH6 + ethnicity_r + melevel_r + ANC, design = mics_design_p1, family = quasibinomial())
 
-D <- svyglm(penta123_RC ~ windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+D <- svyglm(penta123_RC ~ windex5 + ethnicity_r + melevel_r + ANC, design = mics_design_p1, family = quasibinomial())
 
 summ(A, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 summ(B, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
@@ -2873,15 +3008,15 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 ```{r multivariate penta123}
 # Antenatal care seperately in the model
 
-A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+A <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W, design = mics_design_p1, family = quasibinomial())
 
-B <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN3_1, design = mics_design_p1, family = quasibinomial())
+B <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_T, design = mics_design_p1, family = quasibinomial())
 
-C <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+C <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC + ANC_W, design = mics_design_p1, family = quasibinomial())
 
-D <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_p1, family = quasibinomial())
+D <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + PoB, design = mics_design_p1, family = quasibinomial())
 
-E <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_p1, family = quasibinomial())
+E <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + ANC_W, design = mics_design_p1, family = quasibinomial())
 
 F <- svyglm(penta123_RC ~HH6, design = mics_design_p1, family = quasibinomial())
 
@@ -2944,7 +3079,7 @@ B$auc
 # best predicted model
 
 BPM <- svyglm(formula = penta123_RC ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+    melevel_r + ANC, design = mics_design_p1, family = quasibinomial())
 
 summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
 

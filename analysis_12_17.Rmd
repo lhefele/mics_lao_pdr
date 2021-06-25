@@ -69,7 +69,7 @@ library(lmtest)
 
 # B1
 
-## Data mics 4
+## mics4_b1
 
 
 ```{r dataset mics4 ch}
@@ -95,7 +95,7 @@ sjPlot::view_df(mics4.ch)
 
 ```{r selecting variables children dataset}
 
-mics4.ch_var <- subset(mics4.ch, select = c("HH1", "HH2", "UF6", "UF8Y", "HH6", "HH7", "CAGE", "AG2", "CAGED", "IM1", "IM3H0D", "IM3H0M", "IM3H0Y", "IM3H1D", "IM3H1M", "IM3H1Y", "IM3H2D", "IM3H2M", "IM3H2Y", "IM3H3D", "IM3H3M", "IM3H3Y", "IM5", "IM6", "IM19A", "IM19B", "IM19C", "IM11", "IM12", "IM13", "IM14", "IM15", "AG1D", "AG1M", "AG1Y", "ethnicity", "melevel", "HH7R", "windex5", "HL4", "chweight", "UF11"))
+mics4.ch_var <- subset(mics4.ch, select = c("HH1", "HH2", "UF4", "UF6", "UF8Y", "HH6", "HH7", "CAGE", "AG2", "CAGED", "IM1", "IM3H0D", "IM3H0M", "IM3H0Y", "IM3H1D", "IM3H1M", "IM3H1Y", "IM3H2D", "IM3H2M", "IM3H2Y", "IM3H3D", "IM3H3M", "IM3H3Y", "IM5", "IM6", "IM19A", "IM19B", "IM19C", "IM11", "IM12", "IM13", "IM14", "IM15", "AG1D", "AG1M", "AG1Y", "ethnicity", "melevel", "HH7R", "windex5", "HL4", "chweight", "UF11"))
 
 ```
 
@@ -145,6 +145,31 @@ class(mics4.ch_wm$AG1M_2)
 ```
 
 
+
+```{r household and child id}
+
+
+# Household ID
+mics4.ch_wm %>% unite(HH_id, c(HH1, HH2), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_wm
+
+
+# households with more than one child
+mics4.ch_wm %>% 
+  filter(AG2 <3) %>% 
+  group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n())# 806
+
+# unique id for each child
+mics4.ch_wm %>% unite(ch_id, c(HH1, HH2, UF4), sep = "_", remove = FALSE, na.rm = FALSE) -> mics4.ch_wm
+
+mics4.ch_wm %>% group_by(ch_id) %>% filter(n()>1) %>% summarize(n=n()) # none...
+# identify each child
+
+
+```
+
+
+
+
 ```{r strata}
 
 mics4.ch_wm %>% 
@@ -156,7 +181,7 @@ mics4.ch_wm %>% count(strata)
 
 
 
-### Subset mics 4 b1
+### Subset 4_b1
 
 ```{r mics4.ch_b1}
 
@@ -169,8 +194,6 @@ mics4.ch_wm %>% filter(AG2 < 3) -> mics4.ch_b1
 ```
 
 
-
-### mics4_b1
 
 ### New variables
 
@@ -439,13 +462,34 @@ mics4.ch_b1 %>% count(year)
 
 ```
 
-```{r anc}
+```{r change anc variables}
+
+mics4.ch_b1 %>% count(MN18)
+
+mics4.ch_b1 %>% count(MN3)
+
+mics4.ch_b1 %>% count(MN1)
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN18 = "99")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN3 = "99")) -> mics4.ch_b1
+
+mics4.ch_b1 %>% replace_with_na(replace = list(MN1 = "9")) -> mics4.ch_b1
+
+
+mics4.ch_b1 %>% count(MN18)
+
+mics4.ch_b1 %>% count(MN3)
+
+mics4.ch_b1 %>% count(MN1)
+
+
 mics4.ch_b1$ANC <- mics4.ch_b1$MN1
 
 mics4.ch_b1 %>% mutate(ANC = recode(ANC,
                                      "1" = 1,
-                                     "2" = 0,
-                                     "9" = 0)) -> mics4.ch_b1
+                                     "2" = 0
+                                     )) -> mics4.ch_b1
 
 # new variable place of delivery
 mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
@@ -458,15 +502,14 @@ mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
                         "32" = "3",
                         "33" = "3",
                         "36" = "3",
-                        "96" = "3",
-                        "98" = "3",
-                        "99" = "3")) -> mics4.ch_b1
+                        "96" = "3"
+                        )) -> mics4.ch_b1
 mics4.ch_b1 %>% count(MN18, PoB)
 
 
-mics4.ch_b1 %>% mutate(ANC_T = if_else(MN3 >= 1 & MN3 <=3, 1,
-                                        if_else(MN3 >= 4 & MN3 <= 6, 2,
-                                        if_else(MN3 == 98|  MN3 == 99 , 9, 3)))) -> mics4.ch_b1
+mics4.ch_b1 %>% mutate(ANC_T = if_else(MN3 >= 1 & MN3 <=3 | MN3 == 98, 1,
+                                        if_else(MN3 >= 4 & MN3 <= 6, 2, 3
+                                       ))) -> mics4.ch_b1
 mics4.ch_b1 %>% count(MN3, ANC_T)
 
 mics4.ch_b1 %>% count(MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
@@ -530,7 +573,9 @@ mics4.ch_b1$hepb0_R_24 <- as.factor(mics4.ch_b1$hepb0_R_24)
 ```
 
 
-## Data mics6
+
+
+## mics6_b1
 
 
 ```{r dataset mics6 ch}
@@ -597,7 +642,6 @@ mics6.ch_wm <- merge(mics6.ch_var, mics6.wm_var, by=c("HH1", "HH2", "UF4"), all.
 
 
 ```
-### New variables in mics6.ch
 
 
 
@@ -772,7 +816,7 @@ mics6.ch_wm %>% filter(UB2 < 3) %>% count(IM5_2, IM11)
 
 
 
-### mics6_b1
+### subset 6_b1
 
 ```{r mics6.ch_b1}
 
@@ -1042,14 +1086,32 @@ mics6.ch_b1$AGE <- mics6.ch_b1$UB2
 
 ```
 
-```{r anc}
+```{r change anc variables}
+mics6.ch_b1 %>% count(MN20)
+
+mics6.ch_b1 %>% count(MN5)
+
+mics6.ch_b1 %>% count(MN2)
+
+mics6.ch_b1 %>% replace_with_na(replace = list(MN20 = "99")) -> mics6.ch_b1
+
+mics6.ch_b1 %>% replace_with_na(replace = list(MN5 = "99")) -> mics6.ch_b1
+
+mics6.ch_b1 %>% replace_with_na(replace = list(MN2 = "9")) -> mics6.ch_b1
+
+
+mics6.ch_b1 %>% count(MN20)
+
+mics6.ch_b1 %>% count(MN5)
+
+mics6.ch_b1 %>% count(MN2)
+
 mics6.ch_b1$ANC <- mics6.ch_b1$MN2
 
 
 mics6.ch_b1 %>% mutate(ANC = recode(ANC,
                                      "1" = 1,
-                                     "2" = 0,
-                                     "9" = 0)) -> mics6.ch_b1
+                                     "2" = 0)) -> mics6.ch_b1
 
 # new variable place of delivery
 mics6.ch_b1 %>% mutate(PoB = dplyr::recode(MN20,
@@ -1062,15 +1124,12 @@ mics6.ch_b1 %>% mutate(PoB = dplyr::recode(MN20,
                         "32" = "3",
                         "33" = "3",
                         "36" = "3",
-                        "96" = "3",
-                        "98" = "3",
-                        "99" = "3")) -> mics6.ch_b1
+                        "96" = "3")) -> mics6.ch_b1
 mics6.ch_b1 %>% count(MN20, PoB)
 
 
 mics6.ch_b1 %>% mutate(ANC_T = if_else(MN5 >= 1 & MN5 <=3, 1,
-                                        if_else(MN5 >= 4 & MN5 <= 6, 2,
-                                        if_else(MN5 == 98|  MN5 == 99 , 9, 3)))) -> mics6.ch_b1
+                                        if_else(MN5 >= 4 & MN5 <= 6, 2, 3))) -> mics6.ch_b1
 mics6.ch_b1 %>% count(MN5, ANC_T)
 
 
@@ -1131,7 +1190,7 @@ mics6.ch_b1$hepb0_R_24 <- as.factor(mics6.ch_b1$hepb0_R_24)
 ```
 
 
-## MICS 4 en 6 - b1
+## mics4_6_b1
 ```{r bind rows b1}
 
 mics4_6_b1 <- bind_rows(mics4.ch_b1, mics6.ch_b1)
@@ -1148,6 +1207,7 @@ mics4_6_b1 %>% count(windex5)
 mics4_6_b1 %>% count(HL4)
 mics4_6_b1 %>% count(AGE)
 mics4_6_b1 %>% count(year)
+mics4_6_b1 %>% count(HH_id)
 
 mics4_6_b1 %>% count(PoB)
 mics4_6_b1 %>% count(ANC)
@@ -1182,7 +1242,39 @@ mics_design_4_6_b1 <- svydesign(data = mics4_6_b1,
 
 # Analysis over time B1
 
+
+```{r dependent over time}
+
+summ(svyglm(hepb0_RC_2 ~year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+
+svytable(~ethnicity + HH7R, design = mics_design_4_6_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = HH7R)) +
+  geom_col(position = "fill") 
+
+svytable(~year + hepb0_RC_2 + hepb0_RC_24, design = mics_design_4_6_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_24)) +
+  geom_col(position = "fill") 
+
+png("plot.png")
+plot <- ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_2)) +
+  geom_col(position = "fill") 
+print(plot)
+dev.off()
+
+ggsave("plot.png")
+
+
+svytable(~hepb0_RC_2 + year, design = mics_design_4_6_b1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=year, y=hepb0_RC_2))
+```
+
+
 ```{r hepb0 independent over years}
+
+
 
 summ(svyglm(hepb0_RC_2 ~HH6, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(hepb0_RC_2 ~HH7R, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -1239,6 +1331,8 @@ summ(svyglm(hepb0_RC_2 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, 
 
 ```{r hepbo within 24 hours over years}
 
+#hep0 within 24 hours
+summ(svyglm(hepb0_RC_24 ~year, design = mics_design_4_6_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
 
 # hepb0 within 24 hours
 
@@ -1376,7 +1470,7 @@ plot_model(F, type = "pred", terms = c("year", "ANC"))
 
 # P1
 
-## mics4 p1
+## subset 4 p1
 
 ```{r mics4.ch_p1}
 
@@ -1841,7 +1935,7 @@ mics4.ch_p1$penta123_R <- as.factor(mics4.ch_p1$penta123_R)
 
 ```
 
-## mics6 p1
+## subset 6 p1
 
 ```{r mics6.ch_p1}
 
@@ -2370,6 +2464,8 @@ mics_design_4_6_p1
 
 
 #penta123
+summ(svyglm(penta123_RC ~year, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+
 
 summ(svyglm(penta123_RC ~HH6, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_RC ~HH7R, design = mics_design_4_6_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
