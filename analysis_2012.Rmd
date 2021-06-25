@@ -238,6 +238,11 @@ mics4.ch_wm %>% summarize(n_clusters = n_distinct(strata, HH1))
 ```{r recode categories in independent variables}
 
 
+
+mics4.ch_wm$ethnicity <- as.factor(mics4.ch_wm$ethnicity)
+mics4.ch_wm$melevel <- as.factor(mics4.ch_wm$melevel)
+
+
 mics4.ch_wm %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_wm
 mics4.ch_wm %>% count(ethnicity_r)
 
@@ -522,6 +527,7 @@ mics4.ch_b1 %>% count(hepb0_R_24) # 0: 3348 1: 375
 
 ```{r anc replace 9 with na}
 
+
 mics4.ch_b1 %>% count(MN18)
 
 mics4.ch_b1 %>% count(MN3)
@@ -534,16 +540,19 @@ mics4.ch_b1 %>% replace_with_na(replace = list(MN3 = "99")) -> mics4.ch_b1
 
 mics4.ch_b1 %>% replace_with_na(replace = list(MN1 = "9")) -> mics4.ch_b1
 
-
 mics4.ch_b1 %>% count(MN18)
 
 mics4.ch_b1 %>% count(MN3)
 
 mics4.ch_b1 %>% count(MN1)
 
+
 ```
 
+
+
 ```{r anc}
+
 
 mics4.ch_b1$ANC <- mics4.ch_b1$MN1
 
@@ -551,6 +560,12 @@ mics4.ch_b1 %>% mutate(ANC = recode(ANC,
                                      "1" = 1,
                                      "2" = 0
                                      )) -> mics4.ch_b1
+
+mics4.ch_b1 %>% count(MN18)
+
+class(mics4.ch_b1$MN18)
+mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
+
 
 # new variable place of delivery
 mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
@@ -568,10 +583,14 @@ mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
 mics4.ch_b1 %>% count(MN18, PoB)
 
 
+
 mics4.ch_b1 %>% mutate(ANC_T = if_else(MN3 >= 1 & MN3 <=3 | MN3 == 98, 1,
                                         if_else(MN3 >= 4 & MN3 <= 6, 2, 3
                                        ))) -> mics4.ch_b1
 mics4.ch_b1 %>% count(MN3, ANC_T)
+
+
+mics4.ch_b1 %>% count(MN18_1)
 
 mics4.ch_b1 %>% count(MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
 mics4.ch_b1 %>% count(MN1, MN2A)
@@ -601,6 +620,7 @@ mics4.ch_b1 %>% count(ANC_W)
 
 
 ```
+
 
 
 
@@ -1541,6 +1561,8 @@ mics4.ch_p1 %>% count(IM11, IM12, IM6)
 
 
 # First recode IM12 into penta3_R: recall variable
+
+mics4.ch_p1$IM12 <- as.factor(mics4.ch_p1$IM12)
 
 mics4.ch_p1 %>% count(IM12)
 mics4.ch_p1 %>% 
@@ -3003,6 +3025,69 @@ summ(D, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE )
 
 
 ```
+
+
+
+```{r error in stepAIC}
+
+
+full <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A + MN18_1, design = mics_design_p1, family = quasibinomial())
+
+
+full_step <- stepAIC(full)
+
+
+# is because of the NAs
+
+mics4.ch_p1 %>% count(MN18, MN18_1) # 43 # Place of delivery
+
+mics4.ch_p1 %>% count(MN1) # received ANC yes or no  # 1701 NAs
+
+mics4.ch_p1 %>% count(MN2A)  # This is not a "cleaned" variable! It should be a combination variable that indicates one option (i.e. the doctor) against all other options for the delivery
+#### Way too many NAs -> this is because it is a combination variable
+
+
+
+
+# only MN18_1
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+# only MN1
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+
+
+# only MN2A
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN2A, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+
+
+# only MN18_1 & MN2A
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN18_1 + MN2A, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+## ERROR
+
+
+# only MN1 & MN2A
+test <- svyglm(penta123_RC ~HH6 + windex5 + ethnicity_r + melevel_r + MN1 + MN2A, design = mics_design_p1, family = quasibinomial())
+test_step <- stepAIC(test)
+test_step$anova
+
+
+
+mics4.ch_p1 %>% count(MN1, MN2A, MN2B, MN2C, MN2F, MN2G, MN2X)
+
+```
+
+
 
 
 ```{r multivariate penta123}
