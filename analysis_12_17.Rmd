@@ -1252,24 +1252,40 @@ tab <- as.data.frame(tab)
 ggplot(data = tab, mapping = aes(x=ethnicity, y=Freq, fill = HH7R)) +
   geom_col(position = "fill") 
 
-svytable(~year + hepb0_RC_2 + hepb0_RC_24, design = mics_design_4_6_b1) -> tab
+svytable(~year + hepb0_RC_1, design = mics_design_4_6_b1) -> tab
 tab <- as.data.frame(tab)
-ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_24)) +
-  geom_col(position = "fill") 
-
-png("plot.png")
-plot <- ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_2)) +
-  geom_col(position = "fill") 
+plot <- ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_1)) +
+  geom_col(position = "fill") +
+  labs(y= "Percentage", x = "Year") +
+  labs(title = "Vaccination coverage rate") +
+  labs(fill = "BD") +
+  scale_fill_discrete(labels = c("No", "Yes, within 24 hrs", "Yes, later")) +
+  scale_y_continuous(labels=percent)
 print(plot)
-dev.off()
+ggsave("plot.png", width = 8, height = 8, units = "cm")
+
+
+```
+
+```{r plot independent over years}
+
+plot <- ggplot(data = tab, mapping = aes(x=year, y=hepb0_RC_2, group = melevel_r, color = melevel_r)) +
+  geom_point() + geom_line()
+print(plot)
+
+  labs(y= "Percentage", x = "Year") +
+  labs(title = "Vaccination covarage rate") +
+  labs(fill = "BD") +
+  scale_fill_discrete(labels = c("No", "Yes")) +
+  scale_y_continuous(labels=percent)
+
+
 
 ggsave("plot.png")
+ggsave("plot2.png", width = 8, height = 8, units = "cm")
 
-
-svytable(~hepb0_RC_2 + year, design = mics_design_4_6_b1) -> tab
-tab <- as.data.frame(tab)
-ggplot(data = tab, mapping = aes(x=year, y=hepb0_RC_2))
 ```
+
 
 
 ```{r hepb0 independent over years}
@@ -1391,8 +1407,9 @@ summ(svyglm(hepb0_RC_24 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1,
 
 
 A <- svyglm(hepb0_RC_2 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(A,  exp = TRUE, confint = TRUE, digits = 2)
 
-B <- svyglm(hepb0_RC_2 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial())
+B <-  svyglm(hepb0_RC_2 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial())
 summ(B,  exp = TRUE, confint = TRUE, digits = 2)
 
 C <- svyglm(hepb0_RC_2 ~windex5 + year + windex5*year, design = mics_design_4_6_b1, family = quasibinomial())
@@ -1418,15 +1435,91 @@ summ(E,  exp = TRUE, confint = TRUE, digits = 2)
 
 
 
-plot_model(A, type = "pred", terms = c("year", "melevel_r"))
-plot_model(B, type = "pred", terms = c("year", "HH6"))
-plot_model(C, type = "pred", terms = c("year", "windex5"))
-plot_model(D, type = "pred", terms = c("year", "melevel"))
-plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
-plot_model(F, type = "pred", terms = c("year", "PoB"))
-plot_model(G, type = "pred", terms = c("year", "ANC"))
-plot_model(H, type = "pred", terms = c("year", "ANC_W"))
-plot_model(I, type = "pred", terms = c("year", "ANC_T"))
+plotA <- plot_model(A, type = "pred", terms = c("year", "melevel_r"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "mother's education level * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("none", "primary", "secundary or higher")) +
+  theme(legend.position="bottom")
+print(plotA)
+ggsave("plotA.png")
+
+
+plotB <- plot_model(B, type = "pred", terms = c("year", "HH6"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "area * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("urban", "rural with road", "rural without road")) +
+  theme(legend.position="bottom")
+print(plotB)
+ggsave("plotB.png")
+
+plotC <- plot_model(C, type = "pred", terms = c("year", "windex5"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "wealth index quintile * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("poorest", "second", "third", "fourth", "richest")) +
+  theme(legend.position="bottom")
+print(plotC)
+ggsave("plotC.png")
+
+plotD <- plot_model(D, type = "pred", terms = c("year", "melevel"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "mother's education level * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("none", "primary", "lower secondary",  "upper secondary", "post-secondary", "higher")) +
+  theme(legend.position="bottom")
+print(plotD)
+ggsave("plotD.png")
+
+plotE <- plot_model(E, type = "pred", terms = c("year", "ethnicity_r"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "ethnicity * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("Lao-Thai", "Mon-Khmer", "Hmong-Mien", "other")) +
+  theme(legend.position="bottom")
+print(plotE)
+ggsave("plotE.png")
+
+
+plotF <- plot_model(F, type = "pred", terms = c("year", "PoB"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "place of birth * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("home", "public hospital", "other")) +
+  theme(legend.position="bottom")
+print(plotF)
+ggsave("plotF.png")
+
+plotG <- plot_model(G, type = "pred", terms = c("year", "ANC"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "antenatal care * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("no", "yes")) +
+  theme(legend.position="bottom")
+print(plotG)
+ggsave("plotG.png")
+
+
+plotH <- plot_model(H, type = "pred", terms = c("year", "ANC_W"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "antenatal care giver * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("no one", "doctor", "nurse/midwife", "other")) +
+  theme(legend.position="bottom")
+print(plotH)
+ggsave("plotH.png")
+
+
+plotI <- plot_model(I, type = "pred", terms = c("year", "ANC_T"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "ANC times * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("1-3", "4-6", "7 or more")) +
+  theme(legend.position="bottom")
+print(plotI)
+ggsave("plotI.png")
+
 
 
 
@@ -1436,8 +1529,7 @@ plot_model(I, type = "pred", terms = c("year", "ANC_T"))
 
 
 A <- svyglm(hepb0_RC_24 ~melevel_r + year + melevel_r*year, design = mics_design_4_6_b1, family = quasibinomial())
-
-AA <- svyglm(hepb0_RC_24 ~melevel_r + year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(A,  exp = TRUE, confint = TRUE, digits = 2)
 
 B <- svyglm(hepb0_RC_24 ~HH6 + year + HH6*year, design = mics_design_4_6_b1, family = quasibinomial())
 summ(B,  exp = TRUE, confint = TRUE, digits = 2)
@@ -1451,19 +1543,102 @@ summ(D,  exp = TRUE, confint = TRUE, digits = 2)
 E <- svyglm(hepb0_RC_24 ~ethnicity_r + year + ethnicity_r*year, design = mics_design_4_6_b1, family = quasibinomial())
 summ(E,  exp = TRUE, confint = TRUE, digits = 2)
 
-F <- svyglm(hepb0_RC_24 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial())
-summ(F,  exp = TRUE, confint = TRUE, digits = 2)
+F <- svyglm(hepb0_RC_24 ~PoB + year + PoB*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+G <- svyglm(hepb0_RC_24 ~ANC + year + ANC*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+H <- svyglm(hepb0_RC_24 ~ANC_W + year + ANC_W*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+I <- svyglm(hepb0_RC_24 ~ANC_T + year + ANC_T*year, design = mics_design_4_6_b1, family = quasibinomial())
+summ(E,  exp = TRUE, confint = TRUE, digits = 2)
+
+plot24A <- plot_model(A, type = "pred", terms = c("year", "melevel_r"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "mother's education level * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("none", "primary", "secundary or higher")) +
+  theme(legend.position="bottom")
+print(plot24A)
+ggsave("plot24A.png")
 
 
-plot_model(A, type = "pred", terms = c("year", "melevel_r"))
-plot_model(AA, type = "pred", terms = c("year", "melevel_r"))
+plot24B <- plot_model(B, type = "pred", terms = c("year", "HH6"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "area * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("urban", "rural with road", "rural without road")) +
+  theme(legend.position="bottom")
+print(plot24B)
+ggsave("plot24B.png")
 
-plot_model(B, type = "pred", terms = c("year", "HH6"))
-plot_model(C, type = "pred", terms = c("year", "windex5"))
-plot_model(D, type = "pred", terms = c("year", "melevel"))
-plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
-plot_model(F, type = "pred", terms = c("year", "ANC"))
+plot24C <- plot_model(C, type = "pred", terms = c("year", "windex5"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "wealth index quintile * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("poorest", "second", "third", "fourth", "richest")) +
+  theme(legend.position="bottom")
+print(plot24C)
+ggsave("plot24C.png")
 
+plot24D <- plot_model(D, type = "pred", terms = c("year", "melevel"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "mother's education level * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("none", "primary", "lower secondary",  "upper secondary", "post-secondary", "higher")) +
+  theme(legend.position="bottom")
+print(plot24D)
+ggsave("plot24D.png")
+
+plot24E <- plot_model(E, type = "pred", terms = c("year", "ethnicity_r"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "ethnicity * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("Lao-Thai", "Mon-Khmer", "Hmong-Mien", "other")) +
+  theme(legend.position="bottom")
+print(plot24E)
+ggsave("plot24E.png")
+
+
+plot24F <- plot_model(F, type = "pred", terms = c("year", "PoB"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "place of birth * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("home", "public hospital", "other")) +
+  theme(legend.position="bottom")
+print(plot24F)
+ggsave("plot24F.png")
+
+plot24G <- plot_model(G, type = "pred", terms = c("year", "ANC"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "antenatal care * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("no", "yes")) +
+  theme(legend.position="bottom")
+print(plot24G)
+ggsave("plot24G.png")
+
+
+plot24H <- plot_model(H, type = "pred", terms = c("year", "ANC_W"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "antenatal care giver * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("no one", "doctor", "nurse/midwife", "other")) +
+  theme(legend.position="bottom")
+print(plot24H)
+ggsave("plot24H.png")
+
+
+plot24I <- plot_model(I, type = "pred", terms = c("year", "ANC_T"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate BD", x = "year") +
+  labs(title = "ANC times * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("1-3", "4-6", "7 or more")) +
+  theme(legend.position="bottom")
+print(plot24I)
+ggsave("plot24I.png")
 
 
 ```
@@ -2460,6 +2635,101 @@ mics_design_4_6_p1
 
 ```
 
+```{r dependent over time}
+
+svytable(~year + penta1_RC, design = mics_design_4_6_p1) 
+svytable(~year + penta12_RC, design = mics_design_4_6_p1) 
+svytable(~year + penta123_RC, design = mics_design_4_6_p1) 
+
+svytable(~year + penta1_RC, design = mics_design_4_6_p1) -> tab
+tab <- as.data.frame(tab)
+plot <- ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_1)) +
+  geom_col(position = "fill") +
+  labs(y= "Percentage", x = "Year") +
+  labs(title = "Vaccination coverage rate") +
+  labs(fill = "Pentavalent") +
+  scale_fill_discrete(labels = c("No", "Yes")) +
+  scale_y_continuous(labels=percent)
+print(plot)
+ggsave("plotP1.png", width = 8, height = 8, units = "cm")
+
+svytable(~year + penta12_RC, design = mics_design_4_6_p1) -> tab
+tab <- as.data.frame(tab)
+plot <- ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_1)) +
+  geom_col(position = "fill") +
+  labs(y= "Percentage", x = "Year") +
+  labs(title = "Vaccination coverage rate") +
+  labs(fill = "Pentavalent") +
+  scale_fill_discrete(labels = c("No", "Yes")) +
+  scale_y_continuous(labels=percent)
+print(plot)
+ggsave("plotP2.png", width = 8, height = 8, units = "cm")
+
+svytable(~year + penta123_RC, design = mics_design_4_6_p1) -> tab
+tab <- as.data.frame(tab)
+plot <- ggplot(data = tab, mapping = aes(x=year, y=Freq, fill = hepb0_RC_1)) +
+  geom_col(position = "fill") +
+  labs(y= "Percentage", x = "Year") +
+  labs(title = "Vaccination coverage rate") +
+  labs(fill = "Pentavalent") +
+  scale_fill_discrete(labels = c("No", "Yes")) +
+  scale_y_continuous(labels=percent)
+print(plot)
+ggsave("plotP3.png", width = 8, height = 8, units = "cm")
+
+
+dat <- data.frame(
+  penta1 = c(61.59, 77.83, 71.08),
+  penta2 = c(52.98, 69.03, 62.55),
+  penta3 = c(40.71, 57.11, 56.43),
+  year = as.factor(c("2006", "2012", "2017"))
+)
+
+dat_long <- dat %>%
+  gather("Stat", "Value", -year)
+
+ggplot(dat_long, aes(x = year, y = Value, fill = Stat)) +
+  geom_col(position = "dodge")
+
+
+
+# dat_long <- mics4_6_p1 %>% gather("penta","counts", penta1_RC, penta12_RC, penta123_RC)
+
+# mics_design_4_6_p2 <- svydesign(data = dat_long, 
+                        # weights = ~chweight, 
+                         #id = ~strata+HH1)
+# mics_design_4_6_p2
+
+# dat_long %>% count(penta)
+
+svytable(~year + penta1_RC, ~year + penta12_RC, ~year + penta123_RC, design = mics_design_4_6_p1) -> tab
+tab <- as.data.frame(tab)
+
+ggplot(tab, aes( x = year, y = Freq, fill = penta))  +
+  geom_col(position = "dodge")
+
+
+
+app2 <- mics4_6_p1 %>% 
+  group_by(year) %>% 
+  summarise(penta1 = sum(penta1_RC == "1"),
+            penta2 = sum(penta12_RC == "1"),
+            penta3 = sum(penta123_RC == "1")) %>% 
+  gather( "category", "counts", -year)
+
+ggplot(app2, aes(year, counts)) + 
+  geom_col(aes(fill = category), position = "dodge")
+
+tab <- svytable(~ethnicity, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab
+
+```
+
+
+
 ```{r analysis over time P1}
 
 
@@ -2547,15 +2817,91 @@ summ(I,  exp = TRUE, confint = TRUE, digits = 2)
 
 
 
-plot_model(A, type = "pred", terms = c("year", "melevel_r"))
-plot_model(B, type = "pred", terms = c("year", "HH6"))
-plot_model(C, type = "pred", terms = c("year", "windex5"))
-plot_model(D, type = "pred", terms = c("year", "melevel"))
-plot_model(E, type = "pred", terms = c("year", "ethnicity_r"))
-plot_model(F, type = "pred", terms = c("year", "PoB"))
-plot_model(G, type = "pred", terms = c("year", "ANC"))
-plot_model(H, type = "pred", terms = c("year", "ANC_W"))
-plot_model(I, type = "pred", terms = c("year", "ANC_T"))
+
+plotPA <- plot_model(A, type = "pred", terms = c("year", "melevel_r"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "mother's education level * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("none", "primary", "secundary or higher")) +
+  theme(legend.position="bottom")
+print(plotPA)
+ggsave("plotPA.png")
+
+
+plotPB <- plot_model(B, type = "pred", terms = c("year", "HH6"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "area * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("urban", "rural with road", "rural without road")) +
+  theme(legend.position="bottom")
+print(plotPB)
+ggsave("plotPB.png")
+
+plotPC <- plot_model(C, type = "pred", terms = c("year", "windex5"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "wealth index quintile * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("poorest", "second", "third", "fourth", "richest")) +
+  theme(legend.position="bottom")
+print(plotPC)
+ggsave("plotPC.png")
+
+plotPD <- plot_model(D, type = "pred", terms = c("year", "melevel"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "mother's education level * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("none", "primary", "lower secondary",  "upper secondary", "post-secondary", "higher")) +
+  theme(legend.position="bottom")
+print(plotPD)
+ggsave("plotPD.png")
+
+plotPE <- plot_model(E, type = "pred", terms = c("year", "ethnicity_r"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "ethnicity * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("Lao-Thai", "Mon-Khmer", "Hmong-Mien", "other")) +
+  theme(legend.position="bottom")
+print(plotPE)
+ggsave("plotPE.png")
+
+
+plotPF <- plot_model(F, type = "pred", terms = c("year", "PoB"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "place of birth * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("home", "public hospital", "other")) +
+  theme(legend.position="bottom")
+print(plotPF)
+ggsave("plotPF.png")
+
+plotPG <- plot_model(G, type = "pred", terms = c("year", "ANC"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "antenatal care * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("no", "yes")) +
+  theme(legend.position="bottom")
+print(plotPG)
+ggsave("plotPG.png")
+
+
+plotPH <- plot_model(H, type = "pred", terms = c("year", "ANC_W"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "antenatal care giver * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("no one", "doctor", "nurse/midwife", "other")) +
+  theme(legend.position="bottom")
+print(plotPH)
+ggsave("plotPH.png")
+
+
+plotPI <- plot_model(I, type = "pred", terms = c("year", "ANC_T"), show.p = TRUE) + geom_line()  +
+  labs(y= "coverage rate Pentavalent vaccine", x = "year") +
+  labs(title = "ANC times * year") +
+  labs(colour =  "") +
+  scale_colour_discrete(labels = c("1-3", "4-6", "7 or more")) +
+  theme(legend.position="bottom")
+print(plotPI)
+ggsave("plotPI.png")
 
 
 
