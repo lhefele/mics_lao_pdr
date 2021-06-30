@@ -479,6 +479,22 @@ mics6.ch_b1 %>%
                            )) -> mics6.ch_b1
 mics6.ch_b1 %>% count(hepb0_RC)
 
+
+# had a vaccination card
+mics6.ch_b1 %>% 
+  mutate(hepb0_RC_C = recode(hepb0_RC,
+                           "0_NA" = "1",
+                           "1_Later" = "1",
+                           "1_The next day" = "1",
+                           "1_The same day" = "1",
+                           "R_0" = "0",
+                           "R_8" = "0",
+                           "R_9" = "0",
+                           "R_Later" = "0",
+                           "R_Yes" = "0")) -> mics6.ch_b1
+
+mics6.ch_b1 %>% count(hepb0_RC_C, hepb0_RC)
+
 # hepatitis B birth dose (yes, no)
 # DK will be grouped with no
 # NO RESPONSE will be grouped with no
@@ -654,7 +670,7 @@ mics6.ch_b1 %>% mutate(PoB = dplyr::recode(MN20,
 mics6.ch_b1 %>% count(MN20, PoB)
 
 
-mics6.ch_b1 %>% mutate(ANC_T = if_else(MN5 >= 1 & MN5 <=3, 1,
+mics6.ch_b1 %>% mutate(ANC_T = if_else(MN5 >= 1 & MN5 <=3 |MN5 == 98, 1,
                                         if_else(MN5 >= 4 & MN5 <= 6, 2, 3))) -> mics6.ch_b1
 mics6.ch_b1 %>% count(MN5, ANC_T)
 
@@ -711,6 +727,9 @@ mics6.ch_b1$hepb0_C_2 <- as.factor(mics6.ch_b1$hepb0_C_2)
 mics6.ch_b1$hepb0_C_24 <- as.factor(mics6.ch_b1$hepb0_C_24)
 mics6.ch_b1$hepb0_R_2 <- as.factor(mics6.ch_b1$hepb0_R_2)
 mics6.ch_b1$hepb0_R_24 <- as.factor(mics6.ch_b1$hepb0_R_24)
+
+mics6.ch_b1$hepb0_RC_C <- as.factor(mics6.ch_b1$hepb0_RC_C)
+mics6.ch_b1$hepb0_RC_1 <- as.factor(mics6.ch_b1$hepb0_RC_1)
 ```
 
 
@@ -882,6 +901,12 @@ tab <- svytable(~hh7r, design = mics_design_b1) %>%
   mutate(Total = sum(Freq)) 
 tab 
 
+tab <- svytable(~hepb0_RC_C, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
 
 
 
@@ -1043,6 +1068,12 @@ tab <- svytable(~hepb0_RC_24, design = mics_design_b1) %>%
   mutate(Total = sum(Freq)) 
 tab 
 
+tab <- svytable(~hepb0_RC_1, design = mics_design_b1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
 tab <- svytable(~hepb0_C_2, design = mics_design_b1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
@@ -1126,7 +1157,7 @@ tab
 ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = PoB)) +
   geom_col(position = "fill") 
 
-svytable(~hepb0_RC_2 + MN2, design = mics_design_b1) -> tab
+svytable(~hepb0_RC_2 + ANC, design = mics_design_b1) -> tab
 tab <- as.data.frame(tab)
 tab
 ggplot(data = tab, mapping = aes(x=hepb0_RC_2, y=Freq, fill = MN2)) +
@@ -1255,6 +1286,9 @@ summ(svyglm(hepb0_RC_2 ~MN2, design = mics_design_b1, family = quasibinomial()),
 summ(svyglm(hepb0_RC_2 ~ANC_W, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(hepb0_RC_2 ~ANC_T, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
+summ(svyglm(hepb0_RC_2 ~hepb0_RC_C, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+summ(svyglm(hepb0_RC_24 ~hepb0_RC_C, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 4)
+
 #hep0 within 24 hours
 summ(svyglm(hepb0_RC_24 ~HH6, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(hepb0_RC_24 ~hh7r, design = mics_design_b1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
@@ -1370,10 +1404,14 @@ psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 
 # best predicted model
 
-BPM <- svyglm(formula = hepb0_RC_2 ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
+BPM <- svyglm(formula = hepb0_RC_2 ~ windex5 + ethnicity_r + 
+    melevel_r + ANC_W + PoB + hh7r, design = mics_design_b1, family = quasibinomial())
 
-summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
+summ(BPM, exp = TRUE, confint = TRUE, digits = 4, vifs = TRUE)
+
+psrsq(BPM, method = "Nagelkerke")
+psrsq(BPM, method = "Cox-Snell")
+psrsq(BPM, method = c("Cox-Snell", "Nagelkerke"))
 
 
 # other possible models ANC varied
@@ -1435,9 +1473,13 @@ psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 # best predicted model
 
 BPM <- svyglm(formula = hepb0_RC_24 ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + ANC, design = mics_design_b1, family = quasibinomial())
+   ANC_W + PoB + hh7r, design = mics_design_b1, family = quasibinomial())
 
-summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
+summ(BPM, exp = TRUE, confint = TRUE, digits = 4, vifs = TRUE)
+
+psrsq(full, method = "Nagelkerke")
+psrsq(full, method = "Cox-Snell")
+psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 
 
 # other possible models ANC varied
@@ -1583,6 +1625,16 @@ mics6.ch_p1 %>%
                               "R_8" = 0
                               )) -> mics6.ch_p1
 
+mics6.ch_p1 %>%
+  mutate(penta1_RC_C = recode(penta1_RC,
+                              "0" = 1,
+                              "1" = 1,
+                              "66" = 0,
+                              "R_0" = 0,
+                              "R_1" = 0,
+                              "R_8" = 0
+                              )) -> mics6.ch_p1
+
 mics6.ch_p1 %>% count(penta1_RC_1)
 mics6.ch_p1 %>% count(penta1_R_1)
 mics6.ch_p1 %>% count(penta1_C_1)
@@ -1711,6 +1763,15 @@ mics6.ch_p1 %>%
                               "66" = 1,
                               "R_0" = 0,
                               "R_1" = 1
+                                       )) -> mics6.ch_p1
+
+mics6.ch_p1 %>%
+  mutate(penta2_RC_C = recode(penta2_RC,
+                              "0" = 1,
+                              "1" = 1,
+                              "66" = 0,
+                              "R_0" = 0,
+                              "R_1" = 0
                                        )) -> mics6.ch_p1
 
 mics6.ch_p1 %>% count(penta2_RC_1) # 0: 1734 1: 2806
@@ -1844,6 +1905,15 @@ mics6.ch_p1 %>%
                               "R_1" = 1
                                        )) -> mics6.ch_p1
 
+mics6.ch_p1 %>%
+  mutate(penta3_RC_C = recode(penta3_RC,
+                              "0" = 1,
+                              "1" = 1,
+                              "66" = 0,
+                              "R_0" = 0,
+                              "R_1" = 0
+                                       )) -> mics6.ch_p1
+
 mics6.ch_p1 %>% count(penta3_RC_1) # 0: 2014 1: 2526
 mics6.ch_p1 %>% count(penta3_R_1) # 0: 1571 1: 864
 mics6.ch_p1 %>% count(penta3_C_1) # 0: 443  1: 1662
@@ -1925,6 +1995,12 @@ mics6.ch_p1 %>% count(penta1_R)
 mics6.ch_p1 %>% count(penta12_R) 
 mics6.ch_p1 %>% count(penta123_R)
 
+# at least penta 123 on Card
+mics6.ch_p1 %>% count(penta1_RC_C, penta2_RC_C, penta3_RC_C)
+
+mics6.ch_p1 %>% mutate(penta123_RC_C = if_else(penta1_RC_C == 1 & penta2_RC_C == 1 & penta3_RC_C == 1, 1, 0)) -> mics6.ch_p1
+mics6.ch_p1 %>% count(penta123_RC_C)
+
 
 ```
 
@@ -1984,7 +2060,7 @@ mics6.ch_p1 %>% mutate(PoB = dplyr::recode(MN20,
 mics6.ch_p1 %>% count(MN20, PoB)
 
 
-mics6.ch_p1 %>% mutate(ANC_T = if_else(MN5 >= 1 & MN5 <=3, 1,
+mics6.ch_p1 %>% mutate(ANC_T = if_else(MN5 >= 1 & MN5 <=3 | MN5 == 98, 1,
                                         if_else(MN5 >= 4 & MN5 <= 6, 2, 3))) -> mics6.ch_p1
 mics6.ch_p1 %>% count(MN5, ANC_T)
 
@@ -2046,6 +2122,8 @@ mics6.ch_p1$penta123_C <- as.factor(mics6.ch_p1$penta123_C)
 mics6.ch_p1$penta1_R <- as.factor(mics6.ch_p1$penta1_R)
 mics6.ch_p1$penta12_R <- as.factor(mics6.ch_p1$penta12_R)
 mics6.ch_p1$penta123_R <- as.factor(mics6.ch_p1$penta123_R)
+
+mics6.ch_p1$penta123_RC_C <- as.factor(mics6.ch_p1$penta123_RC_C)
 ```
 
 
@@ -2105,6 +2183,12 @@ tab <- svytable(~HH6, design = mics_design_p1) %>%
 tab 
 
 tab <- svytable(~hh7r, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta123_RC_C, design = mics_design_p1) %>% 
   as.data.frame() %>% 
   mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
   mutate(Total = sum(Freq)) 
@@ -3030,6 +3114,8 @@ summ(svyglm(penta123_RC ~ANC, design = mics_design_p1, family = quasibinomial())
 summ(svyglm(penta123_RC ~ANC_W, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 summ(svyglm(penta123_RC ~ANC_T, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
 
+summ(svyglm(penta123_RC ~penta123_RC_C, design = mics_design_p1, family = quasibinomial()), exp = TRUE, confint = TRUE, digits = 2)
+
 
 ```
 
@@ -3138,10 +3224,7 @@ null <- svyglm(penta123_RC ~ 1, design = mics_design_p1, family = quasibinomial(
 anova(full,null, test="Chisq") 
 
 
-# test correlation between variables 
-m <- vcov(full)
-mcor <- cov2cor(m)
-mcor
+
 
 stepAIC(full)
 
@@ -3150,12 +3233,22 @@ psrsq(full, method = "Nagelkerke")
 psrsq(full, method = "Cox-Snell")
 psrsq(full, method = c("Cox-Snell", "Nagelkerke"))
 
+
+# test correlation between variables 
+m <- vcov(full)
+mcor <- cov2cor(m)
+mcor
+
 # best predicted model
 
 BPM <- svyglm(formula = penta123_RC ~ HH6 + windex5 + ethnicity_r + 
-    melevel_r + ANC_W + PoB, design = mics_design_p1, family = quasibinomial())
+    melevel_r + ANC + PoB, design = mics_design_p1, family = quasibinomial())
 
-summ(BPM, exp = TRUE, confint = TRUE, digits = 2, vifs = TRUE)
+summ(BPM, exp = TRUE, confint = TRUE, digits = 4, vifs = TRUE)
+
+psrsq(BPM, method = "Nagelkerke")
+psrsq(BPM, method = "Cox-Snell")
+psrsq(BPM, method = c("Cox-Snell", "Nagelkerke"))
 
 
 # other possible models ANC varied
