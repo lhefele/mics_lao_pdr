@@ -1,0 +1,1188 @@
+---
+title: "LAO MICS 3"
+author: "Trude"
+date: "06-05-2021"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+    number_sections: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Lao PDR: MICS Data - mics3
+
+
+I changed the structure of the file and delete some bits. If you want to see the earlier version, you can go to the git hub site and look at the previous version.
+
+
+
+```{r options}
+
+options(scipen = 999) # suppress scientific notion
+
+```
+
+
+
+```{r packages}
+
+library(tidyverse)
+
+# library(expss) # export
+
+library(haven) 
+
+library(sjPlot)
+
+#library(sjlabelled)
+
+#library(labelled)
+
+#library(surveytoolbox) # install with #devtools::install_github("martinctc/surveytoolbox")
+
+library(lubridate) # working with dates
+
+library(survey)
+
+library(srvyr)
+
+#library(sjmisc)
+
+#library(knitr)
+
+library(janitor)
+
+#library(survminer)
+
+library(DataExplorer)
+
+library(naniar)
+
+```
+
+
+
+
+## Data
+
+
+```{r dataset mics3 ch}
+
+mics3.ch <- read_sav("./data/mics3/ch.sav")
+
+
+```
+
+
+```{r dataset mics3 wm}
+
+mics3.wm <- read_sav("./data/mics3/wm.sav")
+
+```
+
+
+```{r glimpse}
+
+# Mothers or primary caretakers of children under five – ch.sav
+dim(mics3.ch)
+# [1] 4204 335 
+glimpse(mics3.ch) 
+
+# look at lables 
+sjPlot::view_df(mics3.ch)
+sjPlot::view_df(mics3.wm)
+
+# Mother / caretaker
+mics3.ch %>% count(UF6) # range from 1-16
+# need to make a individual number for the merging
+
+```
+
+
+
+### Merging women data to children 
+
+
+```{r merging}
+# selecting subset of variables of women's dataset
+mics3.wm_var <- subset(mics3.wm, select = c("HH1", "HH2", "LN", "MN2A", "MN2B", "MN2C", "MN2F", "MN2G", "MN2H", "MN2X", "MN2Y","MN8"))
+
+# HH1-2, LN for identifying women
+# MN2 - ANC
+# MN8 - POB
+
+# change variable name in women dataset in order to match with children's
+# woman's line number instead of line number
+mics3.wm_var$UF6 <- mics3.wm_var$LN
+mics3.wm %>% count(LN, WM4) # probably the same variable
+
+
+# Merge joining variables from dataset woman to dataset children_2017 using as key variable: UF4 (mothers or caretakers line number in ch.sav).
+# Common variables used to merge are: HH1, HH2, UF4 in children, LN in women
+mics3.ch_wm <- merge(mics3.ch, mics3.wm_var, by=c("HH1", "HH2", "UF6"), all.x = TRUE)
+
+```
+
+
+### New variables 
+
+
+```{r household and child id}
+
+# Household ID
+mics3.ch_wm %>% unite(HH_id, c(HH1, HH2), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_wm
+
+# Are there any duplicates?
+mics3.ch_wm %>% group_by(HH_id) %>% filter(n()>1) %>% summarize(n=n())
+# 1046 duplicates meaning more children in one household
+
+# Unique id for each child
+# UF4 should be the individual number of each child (LN of child)
+
+mics3.ch_wm %>% 
+  unite(ch_id, 
+        c(HH1, HH2, UF4), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_wm
+mics3.ch_wm %>% group_by(ch_id) %>% filter(n()>1) %>% summarize(n=n())
+# none 
+
+```
+
+
+```{r strata}
+
+# strata
+# Do I need a new variable combining HH6 and HH7?
+
+# The sample for the Lao PDR Multiple Indicator Cluster Survey (MICS) was designed to provide estimates on a large number of indicators conerning the situation of children and women at the national level, for urban and rural areas, and for three regions: North, Central and South.
+
+mics3.ch_wm %>% 
+  unite(strata, c(HH7, HH6), sep = "_", remove = FALSE, na.rm = FALSE) -> mics3.ch_wm
+mics3.ch_wm %>% count(strata)
+
+```
+
+
+
+```{r date of interview}
+
+# Day of the interview
+
+mics3.ch_wm$UF8D_2 <- as.numeric(as.character(mics3.ch_wm$UF8D))
+mics3.ch_wm$UF8Y_2 <- as.numeric(as.character(mics3.ch_wm$UF8Y))
+mics3.ch_wm$UF8M_2 <- as.numeric(as.character(mics3.ch_wm$UF8M))
+
+# day of interview
+mics3.ch_wm %>%  mutate(I_date = make_date(UF8Y_2, UF8M_2, UF8D_2)) -> mics3.ch_wm
+# A function from lubridate package
+
+```
+
+
+
+```{r date of birth}
+
+# Date of birth 
+mics3.ch_wm %>% count(UF10D)
+mics3.ch_wm %>% count(UF10M)
+
+class(mics3.ch_wm$UF10M)
+
+mics3.ch_wm$UF10D_2 <- as.numeric(mics3.ch_wm$UF10D)
+
+mics3.ch_wm$UF10M_2 <- as.numeric(mics3.ch_wm$UF10M)
+
+mics3.ch_wm$UF10Y_2 <- as.numeric(mics3.ch_wm$UF10Y)
+
+mics3.ch_wm %>%  mutate(dob_ch = make_date(UF10Y_2, UF10M_2, UF10D_2)) -> mics3.ch_wm
+
+```
+
+
+
+### Subset
+
+
+
+The data will be subset into children from 1 to 2 years of age for the analysis of the hepatitis B vaccinations.
+
+
+```{r mics3.ch_p1}
+
+mics3.ch_wm %>% filter(UF11 >= 1) -> mics3.ch_p1
+
+
+```
+
+
+
+## mics3.ch_p1
+
+
+### Variables
+
+
+#### tetravalent vaccine
+
+
+```{r tetravalent 1}
+
+
+
+# tetra 1 Only Card
+
+mics3.ch_p1 %>% count(IM5AD)
+
+#change date variables into categorical variables
+mics3.ch_p1 %>% mutate(tetra1_C = if_else(IM5AD <= 31 & IM5AD >=1, 1,
+                                        if_else(IM5AD == 0, 0,
+                                        if_else(IM5AD == 44, 44, 66)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra1_C)
+
+mics3.ch_p1 %>% 
+  mutate(tetra1_C = recode(tetra1_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra1_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info # not neccesary here because there are no entries with 66
+
+mics3.ch_p1$tetra1_C_1 <- mics3.ch_p1$tetra1_C
+mics3.ch_p1 %>% replace_with_na(replace = list(tetra1_C_1 = "66")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra1_C_1) # 0: 394 1: 324
+
+
+
+
+```
+
+
+
+```{r tetravalent 2}
+
+
+
+# tetra 2 Only Card
+
+mics3.ch_p1 %>% count(IM5BD)
+
+#change date variables into categorical variables
+mics3.ch_p1 %>% mutate(tetra2_C = if_else(IM5BD <= 31 & IM5BD >=1, 1,
+                                        if_else(IM5BD == 0, 0,
+                                        if_else(IM5BD == 44, 44, 66)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra2_C)
+
+mics3.ch_p1 %>% 
+  mutate(tetra2_C = recode(tetra2_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra2_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info
+
+mics3.ch_p1$tetra2_C_1 <- mics3.ch_p1$tetra2_C
+mics3.ch_p1 %>% replace_with_na(replace = list(tetra2_C_1 = "66")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra2_C_1) # 0: 419 1: 298
+
+
+
+```
+
+
+
+```{r tetravalent 3}
+
+
+# tetra 3 Only Card
+
+mics3.ch_p1 %>% count(IM5CD)
+
+#change date variables into categorical variables
+mics3.ch_p1 %>% mutate(tetra3_C = if_else(IM5CD <= 31 & IM5CD >=1, 1,
+                                        if_else(IM5CD == 0, 0,
+                                        if_else(IM5CD == 44, 44, 66)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra3_C)
+
+mics3.ch_p1 %>% 
+  mutate(tetra3_C = recode(tetra3_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra3_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info
+
+mics3.ch_p1$tetra3_C_1 <- mics3.ch_p1$tetra3_C
+mics3.ch_p1 %>% replace_with_na(replace = list(tetra3_C_1 = "66")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(tetra3_C_1) # 0: 474 1: 238
+
+
+
+```
+
+
+
+
+#### DPT vaccine
+
+
+```{r DTP 1}
+
+# DPT 1 Only Card
+
+mics3.ch_p1 %>% count(IM4AD)
+
+#change date variables into categorical variables
+mics3.ch_p1 %>% mutate(DPT1_C = if_else(IM4AD <= 31 & IM4AD >=1, 1,
+                                        if_else(IM4AD == 0, 0,
+                                        if_else(IM4AD == 44, 44, 66)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_C)
+mics3.ch_p1 %>% count(DPT1_C, IM15)
+mics3.ch_p1 %>% count(DPT1_C, IM15, IM10, IM9)
+
+
+mics3.ch_p1 %>% 
+  mutate(DPT1_C = recode(DPT1_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info # not neccesary here because there are no entries with 66
+
+mics3.ch_p1$DPT1_C_1 <- mics3.ch_p1$DPT1_C
+mics3.ch_p1 %>% replace_with_na(replace = list(DPT1_C_1 = "66")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_C_1)
+
+
+# DTP1 only recall
+
+mics3.ch_p1 %>% count(IM9, IM10, IM15, DPT1_C_1)
+mics3.ch_p1 %>% count(IM9, DPT1_C_1)
+mics3.ch_p1 %>% count(IM10, IM15)
+
+
+
+# First recode IM15 into DPT1_R: recall variable
+
+mics3.ch_p1 %>% count(IM15)
+mics3.ch_p1 %>% 
+  mutate(DPT1_R = recode(IM15,
+                           "1" = "R_1",
+                           "2" = "R_0",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_R)
+
+
+
+# It is not yet correct
+# In IM10; if all responses were "NO"; there was no probing for the recall of vaccinations
+# Therefore; some of the NAs in the new variable need to be changed to "No" or "DK" #512 no and #13 DK and 2 No response
+
+mics3.ch_p1 %>% 
+  mutate(DPT1_R = replace(DPT1_R, is.na(DPT1_R) & IM10 == 2, "R_0"))  %>%
+  mutate(DPT1_R = replace(DPT1_R, is.na(DPT1_R) & IM10 == 8, "R_8")) %>%
+  mutate(DPT1_R = replace(DPT1_R, is.na(DPT1_R) & IM10 == 9, "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_R)
+
+
+# combine Recall and Card
+
+mics3.ch_p1 %>% count(DPT1_R, DPT1_C)
+mics3.ch_p1 %>% mutate(DPT1_RC = coalesce(DPT1_C, DPT1_R)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT1_RC, IM9)
+
+# Only 1 response is still NA, not categorized. This is solved when using IM9, then the category is 2: Missing, so this response will be categorized as R_0.
+
+mics3.ch_p1 %>% 
+  mutate(DPT1_RC = replace(DPT1_RC, is.na(DPT1_RC) & IM9 == 2, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_RC)
+
+
+mics3.ch_p1 %>% 
+  mutate(DPT1_R_1 = recode(DPT1_RC,
+                           "R_0" = "R_0",
+                           "R_1" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_R_1)
+
+# all outcomes from card RC need to be replaced with NA to only retain recall
+mics3.ch_p1 %>% replace_with_na(replace = list(DPT1_R_1 = c("0", "1"))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT1_R_1)
+
+# combination recall and card
+mics3.ch_p1 %>%
+  mutate(DPT1_RC_1 = recode(DPT1_RC,
+                              "0" = 0,
+                              "1" = 1,
+                              "R_9" = 0,
+                              "R_0" = 0,
+                              "R_1" = 1,
+                              "R_8" = 0
+                              )) -> mics3.ch_p1
+
+mics3.ch_p1 %>% count(DPT1_RC_1) # 0: 592 1: 1064
+mics3.ch_p1 %>% count(DPT1_R_1) # 0: 583 1: 355
+mics3.ch_p1 %>% count(DPT1_C_1) # 0: 9 1: 709
+
+mics3.ch_p1 %>% count(DPT1_C, tetra1_C)
+
+
+```
+
+
+
+```{r DTP 2}
+
+# DPT 2 Only Card
+
+mics3.ch_p1 %>% count(IM4BD)
+
+#change date variables into categorical variables
+mics3.ch_p1 %>% mutate(DPT2_C = if_else(IM4BD <= 31 & IM4BD >=1, 1,
+                                        if_else(IM4BD == 0, 0,
+                                        if_else(IM4BD == 44, 44, 66)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_C)
+mics3.ch_p1 %>% count(DPT2_C, IM15)
+mics3.ch_p1 %>% count(DPT2_C, IM15, IM10, IM9)
+
+
+mics3.ch_p1 %>% 
+  mutate(DPT2_C = recode(DPT2_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info # not neccesary here because there are no entries with 66
+
+mics3.ch_p1$DPT2_C_1 <- mics3.ch_p1$DPT2_C
+mics3.ch_p1 %>% replace_with_na(replace = list(DPT2_C_1 = "66")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_C_1)
+
+
+# DTP1 only recall
+
+mics3.ch_p1 %>% count(IM9, IM10, IM15, DPT2_C_1)
+mics3.ch_p1 %>% count(IM9, DPT2_C_1)
+mics3.ch_p1 %>% count(IM10, IM15)
+
+
+
+# First recode IM15 into DPT2_R: recall variable
+
+mics3.ch_p1 %>% count(IM15)
+mics3.ch_p1 %>% 
+  mutate(DPT2_R = recode(IM15,
+                           "1" = "R_1",
+                           "2" = "R_0",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_R)
+
+# Then recode IM16 into DPT2_R_2: recall variable
+
+mics3.ch_p1 %>% count(IM16)
+mics3.ch_p1 %>% 
+  mutate(DPT2_R_2 = recode(IM16,
+                           "1" = "R_1",
+                           "2" = "R_2",
+                           "3" = "R_3",
+                           "4" = "R_4",
+                           "5" = "R_5",
+                           "6" = "R_6",
+                           "7" = "R_7",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_R_2)
+
+# make a new variable combining IM15 and IM16. 
+# IM 21: 2,3,4,5,6 of 7 means having the second DPT vaccine, IM16: 1,8 or 9 had only one or dont know whether they had one DPT vaccine or more, therefore do not include them assign to 0 together with IM15 No and DK.
+ 
+mics3.ch_p1 %>% count(DPT2_R_2, DPT1_R)
+mics3.ch_p1 %>% mutate(DPT2_R_3 = coalesce(DPT2_R_2, DPT1_R)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT2_R_3)
+
+mics3.ch_p1 %>% count(IM9, IM10, DPT2_R_3) # everything is correct, no need for replacing
+
+# Recode recall variable DPT2 into yes or no
+
+mics3.ch_p1 %>% 
+  mutate(DPT2_R_2 = recode(DPT2_R_3,
+                           "R_0" = "R_0",
+                           "R_1" = "R_0",
+                           "R_2" = "R_1",
+                           "R_3" = "R_1",
+                           "R_4" = "R_1",
+                           "R_5" = "R_1",
+                           "R_6" = "R_1",
+                           "R_7" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_R_2)
+
+
+# combine Recall and Card
+
+mics3.ch_p1 %>% count(DPT2_R_2, DPT2_C)
+
+# R_0	0	  3		
+# R_0	1	  21		
+# R_0	NA	663		
+# R_1	1	  10		
+# R_1	NA	274		
+# NA	0	  71		
+# NA	1	  606		
+# NA	NA	8
+
+# 21 children have 1 on card and value 0 on recall; 1o children have value 1 on card and 1 on recall, 8 children have no value on both card. 
+# 21 and 10 children should be counted on the card, in recall variable change for NA
+
+mics3.ch_p1 %>% mutate(DPT2_RC = coalesce(DPT2_C, DPT2_R_2)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT2_RC, IM9)
+
+# Only 1 response is still NA, not categorized. This is solved when using IM9, then the category is 2: Missing, so this response will be categorized as R_0.
+
+mics3.ch_p1 %>% 
+  mutate(DPT2_RC = replace(DPT2_RC, is.na(DPT2_RC) & IM9 == 2, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_RC)
+mics3.ch_p1 %>% 
+  mutate(DPT2_RC = replace(DPT2_RC, is.na(DPT2_RC) & IM9 == 1, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_RC)
+
+
+mics3.ch_p1 %>% 
+  mutate(DPT2_R_1 = recode(DPT2_RC,
+                           "R_0" = "R_0",
+                           "R_1" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_R_1)
+
+# all outcomes from card RC need to be replaced with NA to only retain recall
+mics3.ch_p1 %>% replace_with_na(replace = list(DPT2_R_1 = c("0", "1"))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT2_R_1)
+
+# combination recall and card
+mics3.ch_p1 %>%
+  mutate(DPT2_RC_1 = recode(DPT2_RC,
+                              "0" = 0,
+                              "1" = 1,
+                              "R_9" = 0,
+                              "R_0" = 0,
+                              "R_1" = 1,
+                              "R_8" = 0
+                              )) -> mics3.ch_p1
+
+mics3.ch_p1 %>% count(DPT2_RC_1) # 0: 745 1: 911
+mics3.ch_p1 %>% count(DPT2_R_1) # 0: 671 1: 274
+mics3.ch_p1 %>% count(DPT2_C_1) # 0: 74 1: 637
+
+
+
+
+```
+
+
+
+
+
+```{r DTP 3}
+
+# DPT 2 Only Card
+
+mics3.ch_p1 %>% count(IM4CD)
+
+#change date variables into categorical variables
+mics3.ch_p1 %>% mutate(DPT3_C = if_else(IM4CD <= 31 & IM4CD >=1, 1,
+                                        if_else(IM4CD == 0, 0,
+                                        if_else(IM4CD == 44, 44, 66)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_C)
+mics3.ch_p1 %>% count(DPT3_C, IM15)
+mics3.ch_p1 %>% count(DPT3_C, IM15, IM10, IM9)
+
+
+mics3.ch_p1 %>% 
+  mutate(DPT3_C = recode(DPT3_C,
+                           "44" = "1",
+                           "66" = "66",
+                           "1" = "1",
+                           "0" = "0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_C)
+
+# 66 needs to be replaced with NA because this is recall info and not card info # not neccesary here because there are no entries with 66
+
+mics3.ch_p1$DPT3_C_1 <- mics3.ch_p1$DPT3_C
+mics3.ch_p1 %>% replace_with_na(replace = list(DPT3_C_1 = "66")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_C_1)
+
+
+# DTP1 only recall
+
+mics3.ch_p1 %>% count(IM9, IM10, IM15, DPT3_C_1)
+mics3.ch_p1 %>% count(IM9, DPT3_C_1)
+mics3.ch_p1 %>% count(IM10, IM15)
+
+
+
+# First recode IM15 into DPT3_R: recall variable
+
+mics3.ch_p1 %>% count(IM15)
+mics3.ch_p1 %>% 
+  mutate(DPT3_R = recode(IM15,
+                           "1" = "R_1",
+                           "2" = "R_0",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_R)
+
+# Then recode IM16 into DPT3_R_2: recall variable
+
+mics3.ch_p1 %>% count(IM16)
+mics3.ch_p1 %>% 
+  mutate(DPT3_R_2 = recode(IM16,
+                           "1" = "R_1",
+                           "2" = "R_2",
+                           "3" = "R_3",
+                           "4" = "R_4",
+                           "5" = "R_5",
+                           "6" = "R_6",
+                           "7" = "R_7",
+                           "8" = "R_8",
+                           "9" = "R_9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_R_2)
+
+# make a new variable combining IM15 and IM16. 
+# IM 21: 2,3,4,5,6 of 7 means having the second DPT vaccine, IM16: 1,8 or 9 had only one or dont know whether they had one DPT vaccine or more, therefore do not include them assign to 0 together with IM15 No and DK.
+ 
+mics3.ch_p1 %>% count(DPT3_R_2, DPT1_R)
+mics3.ch_p1 %>% mutate(DPT3_R_3 = coalesce(DPT3_R_2, DPT1_R)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT3_R_3)
+
+mics3.ch_p1 %>% count(IM9, IM10, DPT3_R_3) # everything is correct, no need for replacing
+
+# Recode recall variable DPT3 into yes or no
+
+mics3.ch_p1 %>% 
+  mutate(DPT3_R_2 = recode(DPT3_R_3,
+                           "R_0" = "R_0",
+                           "R_1" = "R_0",
+                           "R_2" = "R_0",
+                           "R_3" = "R_1",
+                           "R_4" = "R_1",
+                           "R_5" = "R_1",
+                           "R_6" = "R_1",
+                           "R_7" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_R_2)
+
+
+# combine Recall and Card
+
+mics3.ch_p1 %>% count(DPT3_R_2, DPT3_C)
+
+# R_0	0	  3		
+# R_0	1	  21		
+# R_0	NA	663		
+# R_1	1	  10		
+# R_1	NA	274		
+# NA	0	  71		
+# NA	1	  606		
+# NA	NA	8
+
+# 21 children have 1 on card and value 0 on recall; 1o children have value 1 on card and 1 on recall, 8 children have no value on both card. 
+# 21 and 10 children should be counted on the card, in recall variable change for NA
+
+mics3.ch_p1 %>% mutate(DPT3_RC = coalesce(DPT3_C, DPT3_R_2)) -> mics3.ch_p1 
+mics3.ch_p1 %>% count(DPT3_RC, IM9)
+
+# Only 1 response is still NA, not categorized. This is solved when using IM9, then the category is 2: Missing, so this response will be categorized as R_0.
+
+mics3.ch_p1 %>% 
+  mutate(DPT3_RC = replace(DPT3_RC, is.na(DPT3_RC) & IM9 == 2, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_RC)
+mics3.ch_p1 %>% 
+  mutate(DPT3_RC = replace(DPT3_RC, is.na(DPT3_RC) & IM9 == 1, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_RC)
+mics3.ch_p1 %>% 
+  mutate(DPT3_RC = replace(DPT3_RC, is.na(DPT3_RC) & IM9 == 8, "R_0")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_RC)
+
+
+mics3.ch_p1 %>% 
+  mutate(DPT3_R_1 = recode(DPT3_RC,
+                           "R_0" = "R_0",
+                           "R_1" = "R_1",
+                           "R_8" = "R_0",
+                           "R_9" = "R_0"
+                           )) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_R_1)
+
+# all outcomes from card RC need to be replaced with NA to only retain recall
+mics3.ch_p1 %>% replace_with_na(replace = list(DPT3_R_1 = c("0", "1"))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(DPT3_R_1)
+
+# combination recall and card
+mics3.ch_p1 %>%
+  mutate(DPT3_RC_1 = recode(DPT3_RC,
+                              "0" = 0,
+                              "1" = 1,
+                              "R_9" = 0,
+                              "R_0" = 0,
+                              "R_1" = 1,
+                              "R_8" = 0
+                              )) -> mics3.ch_p1
+
+mics3.ch_p1 %>% count(DPT3_RC_1) # 0: 962 1: 694
+mics3.ch_p1 %>% count(DPT3_R_1) # 0: 793 1: 173
+mics3.ch_p1 %>% count(DPT3_C_1) # 0: 169 1: 521
+
+```
+
+```{r penta 123}
+
+# check if they got all 3 vaccinations, not only second or third. 
+
+
+mics3.ch_p1 %>% count(DPT1_RC_1, DPT2_RC_1, DPT3_RC_1)
+
+
+# new variables at least one vaccine
+
+
+# new variable penta1 got at least one vaccinations according to card or recall
+mics3.ch_p1 %>% mutate(penta1_RC = if_else(DPT1_RC_1 == 1 | DPT2_RC_1 == 1 | DPT3_RC_1 == 1, 1, 0)) -> mics3.ch_p1
+mics3.ch_p1 %>% count(penta1_RC)
+
+
+
+# new variable penta12 got at least two vaccinations according to card or recall
+mics3.ch_p1 %>% mutate(penta12_RC = if_else(DPT1_RC_1 == 1 & DPT2_RC_1 == 1, 1,
+                                    if_else(DPT1_RC_1 == 1 & DPT3_RC_1 == 1, 1,
+                                    if_else(DPT2_RC_1 == 1 & DPT3_RC_1 == 1, 1, 0)))) -> mics3.ch_p1
+mics3.ch_p1 %>% count(penta12_RC)
+
+
+# new variable penta123 got at least three vaccinations according to card or recall
+mics3.ch_p1 %>% mutate(penta123_RC = if_else(DPT1_RC_1 == 1 & DPT2_RC_1 == 1 & DPT3_RC_1 == 1, 1, 0)) -> mics3.ch_p1
+mics3.ch_p1 %>% count(penta123_RC)
+
+
+
+
+
+```
+
+#### Antenatal care
+
+```{r anc}
+mics3.ch_p1 %>% count(IM5AD, IM4AD, tetra1_C, DPT1_C)
+
+# new variable place of delivery
+mics3.ch_p1 %>% 
+  mutate(MN8_1 = recode(MN8,
+                        "11" = "1",
+                        "12" = "1",
+                        "21" = "2",
+                        "22" = "2",
+                        "26" = "2",
+                        "31" = "3",
+                        "32" = "3",
+                        "33" = "3",
+                        "36" = "3",
+                        "96" = "9",
+                        "98" = "9",
+                        "99" = "9")) -> mics3.ch_p1
+mics3.ch_p1 %>% count(MN8, MN8_1)
+
+```
+
+
+
+
+### Survey design
+
+
+```{r survey design}
+
+# The sample for the Lao PDR Multiple Indicator Cluster Survey (MICS) was designed to provide estimates on a large number of indicators conerning the situation of children and women at the national level, for urban and rural areas, and for three regions: North, Central and South. Regions were identified as the main sampling domains and the sample was selected in two stages. Within each region, 100 census enumeration areas were selected with probability proportional to size. After a household listing was carried out within the selected enumeration areas, a systematic sample of 20 households was drawn. Although the sample was designed to collect information from 6,000 households, it was known in advance that one village only had 15 households, therefore the total expected number of households was 5,995. Of the selected enumeration areas, all but two were visited during the fieldwork period. The two missing enumeration areas were replaced in the field with villages of similar area type. The sample was stratified by region and is not self-weighting. For reporting national level results, sample weights are used. A more detailed description of the sample design can be found in Appendix A.
+
+
+
+# Understanding the sample design
+mics3.ch_wm %>% count(HH1) # enumeration areas; 20 hh were drawn for each enumeration area
+mics3.ch_wm %>% count(HH6) # Area
+mics3.ch_wm %>% tabyl(HH7, HH6)
+
+mics3.ch_wm %>% count(strata) # 9 rows
+
+
+
+# Make design for pentavalent with selected children aged under 3 and older than 1 year: n = 1656
+
+mics_design_p1 <- svydesign(data = mics3.ch_p1, 
+                         weights = ~chweight, 
+                         id = ~strata+HH1)
+
+
+
+```
+
+
+
+### Descriptive analysis - weighted
+
+
+#### Independent variables
+
+```{r descriptive}
+
+
+# taking survey design into account 
+
+# What are interesting things to explore in the dataset?
+
+# Province
+# Area
+# Direction?
+# Wealth score
+# melevel education mother
+# Age
+# Ethnicity
+
+tab_ethnicity <- svytable(~HC1C, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_ethnicity
+
+# For comparison:
+
+mics3.ch_p1 %>% 
+  as_survey(weights = c(chweight)) %>% 
+  group_by(HC1C) %>% 
+  summarize(n = survey_total()) # same result
+
+
+tab_melevel <- svytable(~melevel, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_melevel 
+  
+tab_HL4 <- svytable(~HL4, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_HL4 
+
+tab_windex5 <- svytable(~wlthind5, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_windex5 
+
+tab_HH6 <- svytable(~HH6, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_HH6 
+
+tab_HH7 <- svytable(~HH7, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_HH7 
+
+ 
+# combination of independent variables in graphs
+
+svytable(~HC1C + HH7, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = HH7)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~HC1C + wlthind5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = wlthind5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + HH6, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + HH7, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = HH7)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+svytable(~melevel + wlthind5, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=melevel, y=Freq, fill = wlthind5)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+
+# Age should not give too many surprises?
+svytable(~UF11 + HH7, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=UF11, y=Freq, fill = HH7)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~HC1C + UF11, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = UF11)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+svytable(~HL4 + UF11, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+ggplot(data = tab, mapping = aes(x=HL4, y=Freq, fill = UF11)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+```
+
+
+
+```{r anc}
+
+# place of delivery: MN8
+mics3.ch_p1 %>% count(MN8_1)
+tab_MN8 <- svytable(~MN8_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN8 
+
+
+# antenatal care provider
+mics3.ch_p1 %>% count(MN2A, MN2B, MN2C,MN2F, MN2G, MN2H, MN2X, MN2Y)
+
+tab_MN2A <- svytable(~MN2A, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2A 
+tab_MN2B <- svytable(~MN2B, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2B
+tab_MN2C <- svytable(~MN2C, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2C
+tab_MN2F <- svytable(~MN2F, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2F
+tab_MN2G <- svytable(~MN2G, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2G
+tab_MN2H <- svytable(~MN2H, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2H
+tab_MN2X <- svytable(~MN2X, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2X
+tab_MN2Y <- svytable(~MN2Y, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_MN2Y
+
+```
+
+
+```{r descriptive - dependent variables}
+
+tab_tetra1_C_1 <- svytable(~tetra1_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_tetra1_C_1 
+
+tab_tetra2_C_1 <- svytable(~tetra2_C_1, design = mics_design_p1) %>% 
+ as.data.frame() %>% 
+ mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+ mutate(Total = sum(Freq)) 
+tab_tetra2_C_1 
+
+tab_tetra3_C_1 <- svytable(~tetra3_C_1, design = mics_design_p1) %>% 
+ as.data.frame() %>% 
+ mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+ mutate(Total = sum(Freq)) 
+tab_tetra3_C_1 
+
+
+tab_DPT1_RC_1 <- svytable(~DPT1_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT1_RC_1 
+
+tab_DPT1_R_1 <- svytable(~DPT1_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT1_R_1 
+
+tab_DPT1_C_1 <- svytable(~DPT1_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT1_C_1 
+
+tab_DPT2_RC_1 <- svytable(~DPT2_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT2_RC_1 
+
+tab_DPT2_R_1 <- svytable(~DPT2_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT2_R_1 
+
+tab_DPT2_C_1 <- svytable(~DPT2_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT2_C_1 
+
+tab_DPT3_RC_1 <- svytable(~DPT3_RC_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT3_RC_1 
+
+tab_DPT3_R_1 <- svytable(~DPT3_R_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT3_R_1 
+
+tab_DPT3_C_1 <- svytable(~DPT3_C_1, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab_DPT3_C_1 
+
+tab <- svytable(~penta1_RC, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta12_RC, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+tab <- svytable(~penta123_RC, design = mics_design_p1) %>% 
+  as.data.frame() %>% 
+  mutate(Prop = round(Freq / sum(Freq)*100, 2)) %>%
+  mutate(Total = sum(Freq)) 
+tab 
+
+```
+
+
+
+#### Bivariate analysis
+
+
+```{r inference}
+
+# Looking at two variables: Ethnicity and area (urban / rural)
+# Is there an association?
+
+# survey design 
+
+svytable(~HC1C + HH6, design = mics_design_p1) -> tab
+tab <- as.data.frame(tab)
+tab
+ggplot(data = tab, mapping = aes(x=HC1C, y=Freq, fill = HH6)) +
+  geom_col(position = "fill") +
+  coord_flip()
+
+
+# H0: Area not associated with race
+# H1: Area associated with race
+# svychisq(~HC1C + HH6, design = mics_design, statistic = "Chisq") 
+
+
+svychisq(~HC1C + HH6, design = mics_design_p1, statistic = "Chisq") 
+# X-squared = 363.71, df = 8, p-value = 0.7144
+
+
+
+
+
+# Getting summary statistics while accounting for survey design
+
+# what would be a numeric variable??
+# UF11
+svymean(~UF11, design = mics_design_p1, na.rm=TRUE)
+#       mean     SE
+# UF11 2.0415 0.016
+
+svyquantile(x = ~UF11, design = mics_design_p1, na.rm=TRUE, quantiles = 0.5) # 2
+
+
+
+```
+
+
