@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 
-# Lao PDR: MICS Data - mics4
+# Lao PDR: MICS Data - mics4 
 
 
 
@@ -93,6 +93,8 @@ mics4.wm <- read_sav("./data/mics4/wm.sav")
 # look at lables 
 sjPlot::view_df(mics4.ch)
 
+sjPlot::view_df(mics4.wm)
+
 ```
 
 
@@ -170,9 +172,12 @@ mics4.ch_wm %>% count(IM5,IM5_2)
 mics4.ch_wm %>% count(AG1D)
 mics4.ch_wm %>% count(AG1M)
 
-class(mics4.ch_wm$UB1M)
+#class(mics4.ch_wm$UB1M) # NULL - why? Is not in dataset
 
 mics4.ch_wm$AG1D_2 <- as.numeric(mics4.ch_wm$AG1D)
+
+# Check
+mics4.ch_wm %>% count(AG1D, AG1D_2) # just to check if conversion worked
 
 mics4.ch_wm$AG1M_2 <- as.numeric(mics4.ch_wm$AG1M)
 
@@ -183,6 +188,8 @@ mics4.ch_wm %>%  mutate(dob_ch = make_date(AG1Y_2, AG1M_2, AG1D_2)) -> mics4.ch_
 class(mics4.ch_wm$AG1M_2)
 
 ```
+
+
 
 ```{r household and child id}
 
@@ -238,15 +245,58 @@ mics4.ch_wm %>% summarize(n_clusters = n_distinct(strata, HH1))
 
 ```{r recode categories in independent variables}
 
+# what class are these variable at the moment?
+class(mics4.ch_wm$ethnicity) # [1] "haven_labelled" "vctrs_vctr"     "double"      
+
 mics4.ch_wm$ethnicity <- as.factor(mics4.ch_wm$ethnicity)
 mics4.ch_wm$melevel <- as.factor(mics4.ch_wm$melevel)
 
 
-mics4.ch_wm %>% mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_wm
-mics4.ch_wm %>% count(ethnicity_r)
+# Ethnicity
+# 1 Lao
+# 2 Khmu
+# 3 Hmong
+# 4 Other  --- Are the ethnicity groupings the same as in 2017?
+# 9 Missing/Other
+mics4.ch_wm %>% 
+  mutate(ethnicity_r = recode(ethnicity, "1" = 1, "2" = 2, "3" = 3, "4" = 4, "9" = 4)) -> mics4.ch_wm
+mics4.ch_wm %>% count(ethnicity, ethnicity_r)
 
-mics4.ch_wm %>% mutate(melevel_r = recode(melevel, "1" = 0, "2" = 1, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics4.ch_wm
+# lang = Language group of household head
+mics4.ch %>% count(ethnicity, lang) # Yes, that is very different
+
+
+mics4.ch_wm %>% 
+  mutate(ethnicity_r_2 = recode(ethnicity, "1" = 1, "2" = 2, "3" = 2, "4" = 2, "9" = 2)) -> mics4.ch_wm
+mics4.ch_wm %>% count(ethnicity, ethnicity_r_2)
+
+
+
+
+# Mother's education
+# 1 None
+# 2 Primary
+# 3 Lower secondary
+# 4 Upper secondary
+# 5 Post secondary non tertiary
+# 6 Higher
+# 9 Missing/DK
+
+mics4.ch_wm %>% 
+  mutate(melevel_r = recode(
+    melevel, "1" = 0, "2" = 1, "3" = 2, "4" = 2, "5" = 2, "6" = 2, "9" = 0)) -> mics4.ch_wm
 mics4.ch_wm %>% count(melevel, melevel_r)
+# 0 = None + 9
+# 1 = Primary
+# 2 all others
+
+
+
+# HH&
+mics4.ch_wm %>% mutate(HH6_r = recode(HH6, "1" = 1, "2" = 2, "3" = 2)) -> mics4.ch_wm
+mics4.ch_wm %>% count(HH6, HH6_r)
+
+
 
 ```
 
@@ -299,12 +349,11 @@ mics4.ch_b1 %>% count(IM3H0_date) # looks ok
 
 # Time since vaccination
 
-# I am using a command from R base here. There is probably a way to calculate it with a tidyverse command
-
-mics4.ch_b1$IM3H0_time <- as.numeric(difftime(mics4.ch_b1$IM3H0_date, mics4.ch_b1$dob_ch, units = "days"))
+mics4.ch_b1$IM3H0_time <- as.numeric(difftime(mics4.ch_b1$IM3H0_date, mics4.ch_b1$dob_ch, 
+                                              units = "days"))
 summary(mics4.ch_b1$IM3H0_time)
 # Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
-# -365.00    0.00    0.00   17.44    6.50  688.00    5100 
+# -365.00    0.00    0.00   17.45    6.50  688.00    5083
 
 # Comments on time since vaccination:
 # min = -365 probably mistake in year. 
@@ -361,13 +410,17 @@ mics4.ch_b1 %>% count(hepb0_C)
 
 mics4.ch_b1 %>% count(IM14)
 mics4.ch_b1$IM14_2 <- as.numeric(mics4.ch_b1$IM14)
+
 mics4.ch_b1 %>% count(IM13)
 mics4.ch_b1$IM13_2 <- as.numeric(mics4.ch_b1$IM13)
+
 mics4.ch_b1 %>% 
   mutate(hepb0_R_14 = recode(IM14_2,
                            "1" = "R_Yes",
                            "2" = "R_Later",
                            "9" = "R_9")) -> mics4.ch_b1
+
+
 mics4.ch_b1 %>% 
   mutate(hepb0_R_13 = recode(IM13_2,
                            "1" = "R_Yes",
@@ -387,8 +440,10 @@ mics4.ch_b1 %>%
   mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 2, "R_No"))  %>%
   mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 8, "R_8"))  %>%
   mutate(hepb0_R_13 = replace(hepb0_R_13, is.na(hepb0_R_13) & IM6 == 9, "R_9")) -> mics4.ch_b1
-mics4.ch_b1 %>% count(hepb0_R_13)
-mics4.ch_b1 %>% count(hepb0_C, hepb0_R_13, hepb0_R_14)
+mics4.ch_b1 %>% count(hepb0_C, hepb0_R_13, hepb0_R_14, IM6, IM5)
+
+
+
 
 # Combine Recall variable 13 and 14 into one recall variable
 mics4.ch_b1 %>% 
@@ -572,6 +627,8 @@ mics4.ch_b1 %>% count(MN1)
 
 ```{r anc}
 
+# MN1 is received anc; 1 No, 2 yes; 9 is missing
+
 
 mics4.ch_b1$ANC <- mics4.ch_b1$MN1
 
@@ -580,13 +637,32 @@ mics4.ch_b1 %>% mutate(ANC = recode(ANC,
                                      "2" = 0
                                      )) -> mics4.ch_b1
 
-mics4.ch_b1 %>% count(MN18)
+# 1   0 2274
+# 2   1 2532
+# 3  NA 1767
 
+
+
+mics4.ch_b1 %>% count(MN18) # Place of delivery
 class(mics4.ch_b1$MN18)
 mics4.ch_b1$MN18 <- as.factor(mics4.ch_b1$MN18)
 
 
 # new variable place of delivery
+
+
+# 11 Respondent's home
+# 12 Other home
+# 21 Hospital
+# 22 Health centre
+# 23 Other public
+# 31 Private hospital
+# 32 Private clinic
+# 33 Private maternity home
+# 36 Other private medical
+# 96 Other
+# 99 Missing
+
 mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
                         "11" = "1",
                         "12" = "1",
@@ -600,11 +676,14 @@ mics4.ch_b1 %>% mutate(PoB = dplyr::recode(MN18,
                         "96" = "3"
                         )) -> mics4.ch_b1
 mics4.ch_b1 %>% count(MN18, PoB)
+# 1    1 3062
+# 2    2 1557
+# 3    3  184
 
 
-
+# received ANC
 mics4.ch_b1 %>% mutate(ANC_T = if_else(MN3 >= 1 & MN3 <=3 | MN3 == 98, 1,
-                                        if_else(MN3 >= 4 & MN3 <= 6, 2, 3
+                               if_else(MN3 >= 4 & MN3 <= 6, 2, 3
                                        ))) -> mics4.ch_b1
 mics4.ch_b1 %>% count(MN3, ANC_T)
 
@@ -669,6 +748,10 @@ mics4.ch_b1$hepb0_R_24 <- as.factor(mics4.ch_b1$hepb0_R_24)
 
 mics4.ch_b1$hepb0_RC_C <- as.factor(mics4.ch_b1$hepb0_RC_C)
 
+# New ones
+
+mics4.ch_b1$ethnicity_r_2 <- as.factor(mics4.ch_b1$ethnicity_r_2)
+mics4.ch_b1$HH6_r <- as.factor(mics4.ch_b1$HH6_r)
 
 
 ```
@@ -1162,7 +1245,336 @@ summ(svyglm(hepb0_RC_24 ~ANC_T, design = mics_design_b1, family = quasibinomial(
 
 ```
 
-### Multivariate analysis
+
+
+
+## Multivariable analysis - Lisa
+
+
+
+```{r variables in model}
+# Variables associated with the outcome 
+# having received the hepatitis B birth dose
+
+mics4.ch_b1 %>% count(windex5) # five levels
+mics4.ch_b1 %>% count(HH6)     # three levels
+mics4.ch_b1 %>% count(ethnicity_r) # four levels
+mics4.ch_b1 %>% count(melevel_r)   # three levels
+mics4.ch_b1 %>% count(ANC)        # three levels;          NA: 1767	
+mics4.ch_b1 %>% count(ANC_W)      # four levels            NA: 1767	
+mics4.ch_b1 %>% count(PoB)        # three levels          NA: 1770	
+mics4.ch_b1 %>% count(HL4)        # two levels
+mics4.ch_b1 %>% count(HH7R)       # three levels
+
+
+# How much NA per subset is this percentage-wise?
+
+1767/(2274+2532+1767) # [1] 0.268827
+
+# 27%
+
+
+
+# Region and sex are NS
+# Area : group into rural and urban
+# Ethnicity here is not the same variable as ethnicity in the 2017 dataset
+# Group as Lao-Tai vs all others
+# No education vs other levels?
+
+
+
+
+
+```
+
+
+```{r full model}
+
+
+full <- svyglm(hepb0_RC_2 ~ HH6 
+               + windex5 
+               + ethnicity_r 
+               + melevel_r 
+               + ANC 
+               + ANC_W 
+               + PoB 
+               + HL4 
+               + HH7R, design = mics_design_b1, family = quasibinomial())
+
+summary(full)
+AIC(full) # 5602.818535
+
+mod <- stepAIC(full)
+step(mod)
+mod$anova
+summ(mod)
+
+
+# Are there interactions?
+full.i <- svyglm(hepb0_RC_2 ~ (HH6 
+               + windex5 
+               + ethnicity_r 
+               + melevel_r 
+               + ANC 
+               + ANC_W 
+               + PoB 
+               + HL4 
+               + HH7R)^2, design = mics_design_b1, family = quasibinomial())
+
+summary(full.i) # singularities: meaning there is a lot of overlap?!
+####Cannot calculate
+
+
+# Need to reduce the levels
+
+# ethnicity (actually should be "lang"): Lao Tai vs rest
+# HH6 Rural and urban
+
+
+
+
+```
+
+
+
+
+```{r logistic regression}
+
+
+mics4.ch_b1 %>% count(ANC_W, ANC) # essentially the same variabel; keep ANC_W
+
+
+
+
+mod <- svyglm(hepb0_RC_2 ~ HH6_r  # new variable
+               + windex5 
+               + ethnicity_r_2    # new variable
+               + melevel_r 
+               + ANC_W 
+               + PoB, design = mics_design_b1, family = quasibinomial())
+AIC(mod) # 5636.683274
+
+
+# with command
+mod <- stepAIC(mod)
+step(mod)
+mod$anova # removed nothing
+
+
+
+
+# Logistic regression by hand
+
+# by hand
+mod <- svyglm(hepb0_RC_2 ~ HH6_r 
+               + windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W 
+               + PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod) 
+AIC(mod) # 5636.683274
+
+# Is HH6_r important for the model?
+
+# Remove
+mod2 <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W 
+               + PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod2) 
+
+AIC(mod2) # 5628.772645
+# final model
+
+# other way to get model details
+library(poliscidata)
+fit.svyglm(mod2, digits = 3)
+summ(mod2)
+plot_model(mod2)
+
+## Need to do model diagnostics
+## Need to extract table data
+
+```
+
+
+
+```{r interactions in model?}
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W 
+               + PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod)
+car::vif(mod) 
+# ANC_W is high
+
+
+
+
+# Interactions?
+modi <- svyglm(hepb0_RC_2 ~ (windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W 
+               + PoB)^2, design = mics_design_b1, family = quasibinomial())
+summary(modi) # Cannot be estimated
+
+
+
+# Finding interaction terms by hand - just try it out?
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +windex5*ethnicity_r_2
+           +windex5*melevel_r
+           +windex5*ANC_W
+           +windex5*PoB
+           +ethnicity_r_2*melevel_r
+           +ethnicity_r_2*ANC_W
+           +ethnicity_r_2*PoB
+           +melevel_r*ANC_W
+           +melevel_r*PoB
+           +ANC_W*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod)
+#### too much input
+# INF
+
+
+# For each variable
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +windex5*ethnicity_r_2
+           +windex5*melevel_r
+           +windex5*ANC_W
+           +windex5*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod) # windex55:PoB3
+
+
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +ethnicity_r_2*windex5
+           +ethnicity_r_2*melevel_r
+           +ethnicity_r_2*ANC_W
+           +ethnicity_r_2*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod) # windex52:ethnicity_r_22
+# windex54:ethnicity_r_22
+
+
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +melevel_r*windex5
+           +melevel_r*ethnicity_r_2
+           +melevel_r*ANC_W
+           +melevel_r*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod)
+# Nothing
+
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +ANC_W*windex5
+           +ANC_W*ethnicity_r_2
+           +melevel_r*ANC_W
+           +ANC_W*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod) # ethnicity_r_22:ANC_W1
+
+
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +PoB*windex5
+           +PoB*ethnicity_r_2
+           +PoB*ANC_W
+           +melevel_r*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod) # ANC_W3:PoB3  # windex55:PoB3
+
+
+# ANC - PoB
+# wind - PoB
+# Eth - ANC
+# win - eth
+
+
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +windex5*ethnicity_r_2
+           #+windex5*melevel_r
+           #+windex5*ANC_W
+           +windex5*PoB
+           #+ethnicity_r_2*melevel_r
+           +ethnicity_r_2*ANC_W
+           #+ethnicity_r_2*PoB
+           #+melevel_r*ANC_W
+           #+melevel_r*PoB
+           +ANC_W*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod)
+# win - eth
+# win - PoB
+# ANC - PoB
+
+
+
+mod <- svyglm(hepb0_RC_2 ~ windex5 
+               + ethnicity_r_2 
+               + melevel_r 
+               + ANC_W
+               + PoB
+           +windex5*ethnicity_r_2
+           #+windex5*melevel_r
+           #+windex5*ANC_W
+           +windex5*PoB
+           #+ethnicity_r_2*melevel_r
+           #+ethnicity_r_2*ANC_W
+           #+ethnicity_r_2*PoB
+           #+melevel_r*ANC_W
+           #+melevel_r*PoB
+           +ANC_W*PoB, design = mics_design_b1, family = quasibinomial())
+summary(mod)
+# This would be the final model with interactions??!!
+
+
+
+# Maybe a command for looking at the interactions?
+regTermTest(mod, ~windex5+ethnicity_r_2, method="WorkingWald", df=NULL)
+## IDONT KNOW
+
+```
+
+
+
+
+
+
+
+## Multivariable analysis - Trude
+
 
 ```{r hepb0 multivariate}
 
@@ -1301,6 +1713,7 @@ summ(C, exp = TRUE, confint = TRUE, digits = 4, vifs = TRUE )
 summ(D, exp = TRUE, confint = TRUE, digits = 4, vifs = TRUE )
 
 ```
+
 
 ```{r mixed model}
 
